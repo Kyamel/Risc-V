@@ -62,7 +62,7 @@
 
 ```plaintext
 src/
-├── decoder/InstructionDecoder_tb.v
+├── decoder/InstructionDecoder.v
 └── stages/
     └── EX/
         ├── EX.v                   # Módulo top-level do estágio EX (cola tudo) (Não implementado)
