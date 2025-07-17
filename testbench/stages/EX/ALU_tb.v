@@ -47,27 +47,63 @@ module ALU_tb;
     );
 
     initial begin
-        $display("Testando instruções BEQ e BNE:");
+        $display("Testando ALU completa:");
 
-        // ----- Teste BEQ (deve gerar Zero = 1) -----
-        A = 32'd42;
-        B = 32'd42;
-        opcode = 7'b1100011;   // tipo B (branch)
-        funct3 = 3'b000;       // BEQ
-        funct7 = 7'b0000000;   // não relevante para BEQ
-
+        // Teste ADD (ALUControlOut = 4'b0010)
+        A = 10; B = 15;
+        opcode = 7'b0110011;  // R-type
+        funct3 = 3'b000;
+        funct7 = 7'b0000000;  // ADD
         #10;
-        $display("BEQ A=B: A=%0d B=%0d -> Zero=%b, Result=%0d", A, B, Zero, Result);
+        $display("ADD: %0d + %0d = %0d", A, B, Result);
 
-        // ----- Teste BNE (deve gerar Zero = 0) -----
-        A = 32'd42;
-        B = 32'd13;
-        opcode = 7'b1100011;   // tipo B (branch)
-        funct3 = 3'b001;       // BNE
-        funct7 = 7'b0000000;   // não relevante para BNE
-
+        // Teste SUB (ALUControlOut = 4'b0110)
+        A = 20; B = 5;
+        opcode = 7'b0110011;
+        funct3 = 3'b000;
+        funct7 = 7'b0100000;  // SUB
         #10;
-        $display("BNE A!=B: A=%0d B=%0d -> Zero=%b, Result=%0d", A, B, Zero, Result);
+        $display("SUB: %0d - %0d = %0d", A, B, Result);
+
+        // Teste AND (ALUControlOut = 4'b0000)
+        A = 32'hFF00FF00; B = 32'h0F0F0F0F;
+        opcode = 7'b0010011; // I-type (ANDI)
+        funct3 = 3'b111;
+        funct7 = 7'b0000000;
+        #10;
+        $display("AND: %h & %h = %h", A, B, Result);
+
+        // Teste OR (ALUControlOut = 4'b0001)
+        A = 32'hFF00FF00; B = 32'h0F0F0F0F;
+        opcode = 7'b0010011; // I-type (ORI)
+        funct3 = 3'b110;
+        funct7 = 7'b0000000;
+        #10;
+        $display("OR: %h | %h = %h", A, B, Result);
+
+        // Teste XOR (ALUControlOut = 4'b0011)
+        A = 32'hFF00FF00; B = 32'h0F0F0F0F;
+        opcode = 7'b0010011; // I-type (XORI)
+        funct3 = 3'b100;
+        funct7 = 7'b0000000;
+        #10;
+        $display("XOR: %h ^ %h = %h", A, B, Result);
+
+        // Teste SLL (ALUControlOut = 4'b0100)
+        A = 32'h00000001; B = 5;
+        opcode = 7'b0010011; // I-type (SLLI)
+        funct3 = 3'b001;
+        funct7 = 7'b0000000;
+        #10;
+        $display("SLL: %h << %0d = %h", A, B[4:0], Result);
+
+        // Teste SRL (ALUControlOut = 4'b0101)
+        A = 32'h80000000; B = 31;
+        opcode = 7'b0010011; // I-type (SRLI)
+        funct3 = 3'b101;
+        funct7 = 7'b0000000;
+        #10;
+        $display("SRL: %h >> %0d = %h", A, B[4:0], Result);
 
         $finish;
     end
