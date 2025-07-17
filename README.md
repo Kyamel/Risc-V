@@ -62,24 +62,17 @@
 
 ```plaintext
 src/
+├── decoder/InstructionDecoder_tb.v
 └── stages/
     └── EX/
-        ├── EX.v                   # Módulo top-level do estágio EX (cola tudo)
+        ├── EX.v                   # Módulo top-level do estágio EX (cola tudo) (Não implementado)
         ├── control/
-        │   └── ForwardingUnit.v   # Detecta e aplica data forwarding para evitar hazards
+        │   ├── ALUControl.v  
+        │   │── ControlUnit.v  
+        │   └── ForwardingUnit.v   # Detecta e aplica data forwarding para evitar hazards (Não implementado)
         ├── datapath/
-        │   ├── MuxOpB.v           # MUX entre rs2 e imediato (seleção do segundo operando)
-        │   ├── BranchDecision.v   # Compara rs1 e rs2 para branchs (ex: BNE, BEQ)
-        │   ├── BranchAdder.v      # Calcula PC + offset (endereço do branch)
-        │   └── Pipeline_EX_MEM.v  # Registrador pipeline para passagem EX → MEM
-        └── alu/
-            ├── ALU.v              # Cola os operadores da ALU, escolhe operação pelo opcode/fun3
-            └── ops/
-                ├── Add.v
-                ├── Sub.v
-                ├── Xor.v
-                ├── And.v         
-                ├── Or.v
-                ├── Sll.v
-                ├── Srl.v 
-                └── Bne.v
+        │   ├── MuxOpB.v           # MUX entre rs2 e imediato (seleção do segundo operando) (Não implementado)
+        │   ├── BranchDecision.v   # Compara rs1 e rs2 para branchs (ex: BNE, BEQ) (Não implementado)
+        │   ├── BranchAdder.v      # Calcula PC + offset (endereço do branch) (Não implementado)
+        │   └── Pipeline_EX_MEM.v  # Registrador pipeline para passagem EX → MEM (Não implementado)
+        └── ALU.v
