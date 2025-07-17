@@ -38,6 +38,7 @@
 
 ## Instruções
 
+
 ### Essenciais (obrigatórias para implementar)
 
 | Instrução | Tipo   | Operação | Comentário                               | Reuso interno                                                      |
@@ -50,21 +51,12 @@
 | sw        | S-type | ADD      | Calcula endereço: rs1 + offset          | Reusa a operação ADD para calcular o endereço                      |
 | bne       | B-type | SUB ou XOR + OR | Verifica se rs1 != rs2                  | Pode usar SUB para comparar ou reaproveitar XOR + OR para detectar diferença |
 
-### Úteis (não requisitadas, porém simples e essenciais)
 
-| Instrução | Tipo   | Operação | Comentário                                         | Reuso interno                                                      |
-|-----------|--------|----------|---------------------------------------------------|-------------------------------------------------------------------|
-| sub       | R-type | SUB      | rs1 - rs2 (útil para branchs e aritmética)        | —                                                                 |
-| and       | R-type | AND      | rs1 & rs2                                         | —                                                                 |
-| or        | R-type | OR       | rs1 \| rs2                                        | —                                                                 |
-| andi      | I-type | AND      | rs1 & imediato                                    | Reusa a operação AND                                               |
-| ori       | I-type | OR       | rs1 \| imediato                                   | Reusa a operação OR                                                |
-| jal       | J-type | —        | Jump and link (PC + 4 para rd, desvio relativo)  | —                                                                 |
-| jalr      | I-type | ADD      | Jump and link register (PC + 4 para rd, endereço rs1 + imediato) | Reusa a operação ADD para cálculo do endereço     |
-| beq       | B-type | SUB ou XOR + OR | Branch se rs1 == rs2                               | Igual a `bne`, porém verifica igualdade                   |
-| srl       | R-type | SRL      | Shift Right Logical (rs1 >> rs2[4:0])| —                                                                 |
+[Todas intruções Base RV32E](/docs/rv32e_instrucoes_base_priority.md)  
+[Intrucões Prioridade para Implementar](/docs/rv32e_instrucoes_base_priority.md)  
+![Encoding](/docs/encoding.png)  
+![Encoding Imediate variantes](/docs//encoding_imediate_variant.png)  
 
----
 
 ## Estrutura do Estágio EX (`src/stages/EX`)
 
