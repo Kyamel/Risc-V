@@ -8,7 +8,7 @@
 **Documento oficial da RV32I Base Integer Instruction Set (Versão 2.1):**  
   [RV32I Base Integer Instruction Set - PDF (Google Drive)](https://drive.google.com/file/d/1uviu1nH-tScFfgrovvFCrj7Omv8tFtkp/view?pli=1)  
 **Backup do documento oficial:**  
-  [riscv-unprivileged.pdf](https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf)
+  [riscv-unprivileged.pdf](docs/riscv-unprivileged.pdf)
 
 
 ### Capitúlos mais relevantes:  
