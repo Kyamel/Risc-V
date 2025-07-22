@@ -56,23 +56,71 @@
 [Intrucões Prioridade para Implementar](/docs/rv32e_instrucoes_base_priority.md)  
 ![Encoding](/docs/encoding.png)  
 ![Encoding Imediate variantes](/docs//encoding_imediate_variant.png)  
+![Pipeline](/docs/risc-v-pipeline.svg)  
+![Datapath](/docs/risc-v-dartapath.png)
 
 
-## Estrutura do Estágio EX (`src/stages/EX`)
+## Estrutura do Peojeto
 
-```plaintext
-src/
-├── decoder/InstructionDecoder.v
-└── stages/
-    └── EX/
-        ├── EX.v                   # Módulo top-level do estágio EX (cola tudo) (Não implementado)
-        ├── control/
-        │   ├── ALUControl.v  
-        │   │── ControlUnit.v  
-        │   └── ForwardingUnit.v   # Detecta e aplica data forwarding para evitar hazards (Não implementado)
-        ├── datapath/
-        │   ├── MuxOpB.v           # MUX entre rs2 e imediato (seleção do segundo operando) (Não implementado)
-        │   ├── BranchDecision.v   # Compara rs1 e rs2 para branchs (ex: BNE, BEQ) (Não implementado)
-        │   ├── BranchAdder.v      # Calcula PC + offset (endereço do branch) (Não implementado)
-        │   └── Pipeline_EX_MEM.v  # Registrador pipeline para passagem EX → MEM (Não implementado)
-        └── ALU.v
+rv32e_processor/
+├── src/
+│   ├── core/
+│   │   ├── rv32e_cpu.v                 # Módulo principal do processador
+│   │   ├── pipeline_registers.v        # Registradores entre estágios
+│   │   └── constants.v                 # Definições e constantes
+│   │
+│   ├── stages/
+│   │   ├── if_stage.v                  # Instruction Fetch
+│   │   ├── id_stage.v                  # Instruction Decode
+│   │   ├── ex_stage.v                  # Execute
+│   │   ├── mem_stage.v                 # Memory Access
+│   │   └── wb_stage.v                  # Write Back
+│   │
+│   ├── components/
+│   │   ├── register_file.v             # Banco de 16 registradores
+│   │   ├── alu.v                       # Unidade Lógica Aritmética
+│   │   ├── immediate_generator.v       # Gerador de imediatos
+│   │   ├── branch_unit.v               # Unidade de branch
+│   │   ├── memory_interface.v          # Interface de memória
+│   │   └── pc_generator.v              # Gerador de PC
+│   │
+│   ├── control/
+│   │   ├── control_unit.v              # Unidade de controle principal
+│   │   ├── hazard_detection.v          # Detecção de hazards
+│   │   ├── forwarding_unit.v           # Data forwarding
+│   │   ├── branch_predictor.v          # Preditor de branch (opcional)
+│   │   └── stall_controller.v          # Controle de stalls
+│   │
+│   ├── memory/
+│   │   ├── instruction_memory.v        # Memória de instruções
+│   │   ├── data_memory.v               # Memória de dados
+│   │   └── cache_controller.v          # Controlador de cache (opcional)
+│   │
+│   └── debug/
+│       ├── performance_counters.v      # Contadores de performance
+│       ├── debug_interface.v           # Interface de debug
+│       └── trace_generator.v           # Gerador de traces
+│
+├── tb/
+│   ├── tb_rv32e_cpu.v                  # Testbench principal
+│   ├── tb_individual_stages.v          # Testes de estágios individuais
+│   ├── tb_hazard_tests.v               # Testes específicos de hazards
+│   ├── tb_forwarding.v                 # Testes de forwarding
+│   └── test_programs/
+│       ├── basic_arithmetic.hex        # Programas de teste
+│       ├── branch_tests.hex
+│       ├── load_store_tests.hex
+│       └── hazard_scenarios.hex
+│
+├── scripts/
+│   ├── buuld.py                        # Script de compilação
+│   ├── compile.tcl                     # Script de compilação
+│   ├── simulate.tcl                    # Script de simulação
+│   └── synthesis.tcl                   # Script de síntese
+│
+├── docs/
+│   ├── architecture.md                 # Documentação da arquitetura
+│   ├── pipeline_diagram.svg            # Diagrama do pipeline
+│   └── instruction_set.md              # Conjunto de instruções
+│
+└── Makefile                            # Automatização de build
