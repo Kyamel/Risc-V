@@ -2,3 +2,4 @@ build/
 
 src/backup
 testbench_backup
+encoder/
