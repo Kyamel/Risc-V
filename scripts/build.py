@@ -85,6 +85,20 @@ MODULES = {
         ],
         "tb": TB_DIR / "components" / "tb_memory_interface.v",
     },
+    "control_unit": {
+        "sources": [
+            SRC_DIR / "control" / "control_unit.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "control" / "tb_control_unit.v",
+    },
+    "forwarding_unit": {
+        "sources": [
+            SRC_DIR / "control" / "forwarding_unit.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "control" / "tb_forwarding_unit.v",
+    },
 }
 
 def run_icarus(module_name, sources, tb_file):
