@@ -111,7 +111,8 @@ def run_icarus(module_name, sources, tb_file):
     log_sim = LOG_DIR / f"{module_name}_simulate.log"
 
     cmd_compile = [
-        "iverilog", "-g2005-sv", "-Wall", "-o", str(output_file),
+        "iverilog", "-DSIMULATION", "-g2005-sv", "-Wall", "-o", str(output_file),
+        
         "-I", str(SRC_DIR / "core"),
         *map(str, sources),
         str(tb_file)

@@ -4,8 +4,8 @@ pkgs.mkShell {
   buildInputs = [
     pkgs.iverilog
     pkgs.gtkwave
-    pkgs.pkgsCross.riscv32-embedded.buildPackages.binutils
-    pkgs.pkgsCross.riscv32-embedded.buildPackages.gcc
+    #pkgs.pkgsCross.riscv32-embedded.buildPackages.binutils
+    #pkgs.pkgsCross.riscv32-embedded.buildPackages.gcc
   ];
 
   shellHook = ''
@@ -13,6 +13,5 @@ pkgs.mkShell {
     echo "Ferramentas disponíveis:"
     echo " - iverilog (simulação Verilog)"
     echo " - gtkwave (visualização de waveforms)"
-    echo " - riscv32-unknown-elf-* (toolchain RISC-V)"
   '';
 }

@@ -16,6 +16,9 @@ module tb_instruction_memory;
     reg debug_write_en;
     wire [31:0] debug_data_out;
 
+    // Variável de iteração
+    reg [31:0] i;
+
     // Clock
     always #5 clk = ~clk;
 
@@ -45,6 +48,18 @@ module tb_instruction_memory;
     endtask
 
     initial begin
+        // Dump para GTKWave
+        $dumpfile("dump.vcd");
+        $dumpvars(0, tb_instruction_memory);
+        
+        // Dump manual de parte da memória
+        $display("\n---- DUMP INICIAL DAS PRIMEIRAS INSTRUÇÕES ----");
+        for (i = 0; i < 8; i = i + 1) begin
+            $display("mem[%0d] = %h", i, dut.mem[i]);
+        end
+        
+        $display("-----------------------------------------------\n");
+
         $display("\n---- TESTE INSTRUCTION_MEMORY ----\n");
 
         // Reset inicial
@@ -106,6 +121,8 @@ module tb_instruction_memory;
 
         $display("\n---- FIM DOS TESTES ----\n");
         $finish;
+        
     end
+    
 
 endmodule

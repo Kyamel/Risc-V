@@ -37,7 +37,7 @@ for (const asm of assemblyLines) {
     output.push({
       assembly: asm.trim(),
       binary: binary,
-      hex: `0x${hex}`,
+      hex: hex,
     });
   } catch (error) {
     console.error(`Erro ao codificar "${asm.trim()}": ${error}`);

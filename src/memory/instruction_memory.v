@@ -51,7 +51,7 @@ module instruction_memory (
     // Esta parte é usada apenas durante a simulação
 `ifdef SIMULATION
     initial begin
-        $readmemh("program.hex", mem);
+        $readmemh("compiler/program.hex", mem);
     end
 `endif
 
