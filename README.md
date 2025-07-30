@@ -91,12 +91,12 @@ rv32e_processor/
 │   │   ├── branch_predictor.v          # Preditor de branch (opcional)  
 │   │   └── stall_controller.v          # Controle de stalls  
 │   │  
-│   ├── memory/
+│   ├── memory/  
 │   │   ├── instruction_memory.v        # Memória de instruções             D  
 │   │   ├── data_memory.v               # Memória de dados                  D  
 │   │   └── cache_controller.v          # Controlador de cache (opcional)     
 │   │  
-│   └── debug/
+│   └── debug/  
 │       ├── performance_counters.v      # Contadores de performance  
 │       ├── debug_interface.v           # Interface de debug  
 │       └── trace_generator.v           # Gerador de traces  
