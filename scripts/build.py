@@ -36,6 +36,34 @@ MODULES = {
         ],
         "tb": TB_DIR / "stages" / "tb_id_stage.v",
     },
+    "mem_stage": {
+        "sources": [
+            SRC_DIR / "stages" / "mem_stage.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "stages" / "tb_mem_stage.v",
+    },
+    "wb_stage": {
+        "sources": [
+            SRC_DIR / "stages" / "wb_stage.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "stages" / "tb_wb_stage.v",
+    },
+    "instruction_memory": {
+        "sources": [
+            SRC_DIR / "memory" / "instruction_memory.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "memory" / "tb_instruction_memory.v",
+    },
+    "data_memory": {
+        "sources": [
+            SRC_DIR / "memory" / "data_memory.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "memory" / "tb_data_memory.v",
+    },
 }
 
 def run_icarus(module_name, sources, tb_file):

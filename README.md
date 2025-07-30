@@ -65,36 +65,36 @@
 rv32e_processor/
 ├── src/
 │   ├── core/
-│   │   ├── rv32e_cpu.v                 # Módulo principal do processador
-│   │   ├── pipeline_registers.v        # Registradores entre estágios
+│   │   ├── rv32e_cpu.v                 # Módulo principal do processador   D
+│   │   ├── pipeline_registers.v        # Registradores entre estágios      D
 │   │   └── constants.v                 # Definições e constantes
 │   │
 │   ├── stages/
-│   │   ├── if_stage.v                  # Instruction Fetch
-│   │   ├── id_stage.v                  # Instruction Decode
-│   │   ├── ex_stage.v                  # Execute
-│   │   ├── mem_stage.v                 # Memory Access
-│   │   └── wb_stage.v                  # Write Back
+│   │   ├── if_stage.v                  # Instruction Fetch                 G
+│   │   ├── id_stage.v                  # Instruction Decode                G
+│   │   ├── ex_stage.v                  # Execute                           G
+│   │   ├── mem_stage.v                 # Memory Access                     D
+│   │   └── wb_stage.v                  # Write Back                        D
 │   │
 │   ├── components/
-│   │   ├── register_file.v             # Banco de 16 registradores
-│   │   ├── alu.v                       # Unidade Lógica Aritmética
-│   │   ├── immediate_generator.v       # Gerador de imediatos
+│   │   ├── register_file.v             # Banco de 16 registradores         G
+│   │   ├── alu.v                       # Unidade Lógica Aritmética         G
+│   │   ├── immediate_generator.v       # Gerador de imediatos              G
 │   │   ├── branch_unit.v               # Unidade de branch
 │   │   ├── memory_interface.v          # Interface de memória
 │   │   └── pc_generator.v              # Gerador de PC
 │   │
 │   ├── control/
-│   │   ├── control_unit.v              # Unidade de controle principal
+│   │   ├── control_unit.v              # Unidade de controle principal     G
 │   │   ├── hazard_detection.v          # Detecção de hazards
 │   │   ├── forwarding_unit.v           # Data forwarding
 │   │   ├── branch_predictor.v          # Preditor de branch (opcional)
 │   │   └── stall_controller.v          # Controle de stalls
 │   │
 │   ├── memory/
-│   │   ├── instruction_memory.v        # Memória de instruções
-│   │   ├── data_memory.v               # Memória de dados
-│   │   └── cache_controller.v          # Controlador de cache (opcional)
+│   │   ├── instruction_memory.v        # Memória de instruções             D
+│   │   ├── data_memory.v               # Memória de dados                  D
+│   │   └── cache_controller.v          # Controlador de cache (opcional)   
 │   │
 │   └── debug/
 │       ├── performance_counters.v      # Contadores de performance
@@ -113,7 +113,7 @@ rv32e_processor/
 │       └── hazard_scenarios.hex
 │
 ├── scripts/
-│   ├── buuld.py                        # Script de compilação
+│   ├── build.py                        # Script de compilação
 │   ├── compile.tcl                     # Script de compilação
 │   ├── simulate.tcl                    # Script de simulação
 │   └── synthesis.tcl                   # Script de síntese
