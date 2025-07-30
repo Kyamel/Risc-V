@@ -13,8 +13,8 @@ module forwarding_unit (
     input wire mem_wb_regwrite,
     
     // Outputs de seleção
-    output wire [1:0] forward_a,
-    output wire [1:0] forward_b
+    output reg [1:0] forward_a,
+    output reg [1:0] forward_b
 );
 
 /*    * Valores dos sinais de controle 'forward_a' e 'forward_b':
@@ -54,3 +54,4 @@ always @(*) begin
     
 end
 
+endmodule
