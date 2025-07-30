@@ -28,3 +28,6 @@
 `define CONTROL_SIGNALS_WIDTH 6
 `define MEM_TO_REG 2
 `define REG_WRITE 3
+
+// TB Branch Unit
+`define IS_BRANCH 7

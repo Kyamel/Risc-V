@@ -64,6 +64,27 @@ MODULES = {
         ],
         "tb": TB_DIR / "memory" / "tb_data_memory.v",
     },
+    "pc_generator": {
+        "sources": [
+            SRC_DIR / "components" / "pc_generator.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "components" / "tb_pc_generator.v",
+    },
+    "branch_unit": {
+        "sources": [
+            SRC_DIR / "components" / "branch_unit.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "components" / "tb_branch_unit.v",
+    },
+    "memory_interface": {
+        "sources": [
+            SRC_DIR / "components" / "memory_interface.v",
+            SRC_DIR / "core" / "constants.v",
+        ],
+        "tb": TB_DIR / "components" / "tb_memory_interface.v",
+    },
 }
 
 def run_icarus(module_name, sources, tb_file):
