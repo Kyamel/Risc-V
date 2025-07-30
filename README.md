@@ -62,65 +62,65 @@
 
 ## Estrutura do Peojeto
 
-rv32e_processor/
-├── src/
-│   ├── core/
-│   │   ├── rv32e_cpu.v                 # Módulo principal do processador   D
-│   │   ├── pipeline_registers.v        # Registradores entre estágios      D
-│   │   └── constants.v                 # Definições e constantes
-│   │
-│   ├── stages/
-│   │   ├── if_stage.v                  # Instruction Fetch                 G
-│   │   ├── id_stage.v                  # Instruction Decode                G
-│   │   ├── ex_stage.v                  # Execute                           G
-│   │   ├── mem_stage.v                 # Memory Access                     D
-│   │   └── wb_stage.v                  # Write Back                        D
-│   │
-│   ├── components/
-│   │   ├── register_file.v             # Banco de 16 registradores         G
-│   │   ├── alu.v                       # Unidade Lógica Aritmética         G
-│   │   ├── immediate_generator.v       # Gerador de imediatos              G
-│   │   ├── branch_unit.v               # Unidade de branch
-│   │   ├── memory_interface.v          # Interface de memória
-│   │   └── pc_generator.v              # Gerador de PC
-│   │
-│   ├── control/
-│   │   ├── control_unit.v              # Unidade de controle principal     G
-│   │   ├── hazard_detection.v          # Detecção de hazards
-│   │   ├── forwarding_unit.v           # Data forwarding
-│   │   ├── branch_predictor.v          # Preditor de branch (opcional)
-│   │   └── stall_controller.v          # Controle de stalls
-│   │
+rv32e_processor/  
+├── src/  
+│   ├── core/  
+│   │   ├── rv32e_cpu.v                 # Módulo principal do processador   D  
+│   │   ├── pipeline_registers.v        # Registradores entre estágios      D  
+│   │   └── constants.v                 # Definições e constantes  
+│   │  
+│   ├── stages/  
+│   │   ├── if_stage.v                  # Instruction Fetch                 G  
+│   │   ├── id_stage.v                  # Instruction Decode                G  
+│   │   ├── ex_stage.v                  # Execute                           G  
+│   │   ├── mem_stage.v                 # Memory Access                     D  
+│   │   └── wb_stage.v                  # Write Back                        D  
+│   │  
+│   ├── components/  
+│   │   ├── register_file.v             # Banco de 16 registradores         G  
+│   │   ├── alu.v                       # Unidade Lógica Aritmética         G  
+│   │   ├── immediate_generator.v       # Gerador de imediatos              G  
+│   │   ├── branch_unit.v               # Unidade de branch  
+│   │   ├── memory_interface.v          # Interface de memória  
+│   │   └── pc_generator.v              # Gerador de PC  
+│   │  
+│   ├── control/  
+│   │   ├── control_unit.v              # Unidade de controle principal     G  
+│   │   ├── hazard_detection.v          # Detecção de hazards  
+│   │   ├── forwarding_unit.v           # Data forwarding  
+│   │   ├── branch_predictor.v          # Preditor de branch (opcional)  
+│   │   └── stall_controller.v          # Controle de stalls  
+│   │  
 │   ├── memory/
-│   │   ├── instruction_memory.v        # Memória de instruções             D
-│   │   ├── data_memory.v               # Memória de dados                  D
-│   │   └── cache_controller.v          # Controlador de cache (opcional)   
-│   │
+│   │   ├── instruction_memory.v        # Memória de instruções             D  
+│   │   ├── data_memory.v               # Memória de dados                  D  
+│   │   └── cache_controller.v          # Controlador de cache (opcional)     
+│   │  
 │   └── debug/
-│       ├── performance_counters.v      # Contadores de performance
-│       ├── debug_interface.v           # Interface de debug
-│       └── trace_generator.v           # Gerador de traces
-│
-├── tb/
-│   ├── tb_rv32e_cpu.v                  # Testbench principal
-│   ├── tb_individual_stages.v          # Testes de estágios individuais
-│   ├── tb_hazard_tests.v               # Testes específicos de hazards
-│   ├── tb_forwarding.v                 # Testes de forwarding
-│   └── test_programs/
-│       ├── basic_arithmetic.hex        # Programas de teste
-│       ├── branch_tests.hex
-│       ├── load_store_tests.hex
-│       └── hazard_scenarios.hex
-│
-├── scripts/
-│   ├── build.py                        # Script de compilação
-│   ├── compile.tcl                     # Script de compilação
-│   ├── simulate.tcl                    # Script de simulação
-│   └── synthesis.tcl                   # Script de síntese
-│
-├── docs/
-│   ├── architecture.md                 # Documentação da arquitetura
-│   ├── pipeline_diagram.svg            # Diagrama do pipeline
-│   └── instruction_set.md              # Conjunto de instruções
-│
-└── Makefile                            # Automatização de build
+│       ├── performance_counters.v      # Contadores de performance  
+│       ├── debug_interface.v           # Interface de debug  
+│       └── trace_generator.v           # Gerador de traces  
+│  
+├── tb/  
+│   ├── tb_rv32e_cpu.v                  # Testbench principal  
+│   ├── tb_individual_stages.v          # Testes de estágios individuais  
+│   ├── tb_hazard_tests.v               # Testes específicos de hazards  
+│   ├── tb_forwarding.v                 # Testes de forwarding  
+│   └── test_programs/  
+│       ├── basic_arithmetic.hex        # Programas de teste  
+│       ├── branch_tests.hex  
+│       ├── load_store_tests.hex  
+│       └── hazard_scenarios.hex  
+│  
+├── scripts/  
+│   ├── build.py                        # Script de compilação  
+│   ├── compile.tcl                     # Script de compilação  
+│   ├── simulate.tcl                    # Script de simulação  
+│   └── synthesis.tcl                   # Script de síntese  
+│  
+├── docs/  
+│   ├── architecture.md                 # Documentação da arquitetura  
+│   ├── pipeline_diagram.svg            # Diagrama do pipeline  
+│   └── instruction_set.md              # Conjunto de instruções  
+│  
+└── Makefile                            # Automatização de build via make  
