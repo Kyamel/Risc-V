@@ -52,7 +52,7 @@
 | bne       | B-type | SUB ou XOR + OR | Verifica se rs1 != rs2                  | Pode usar SUB para comparar ou reaproveitar XOR + OR para detectar diferença |
 
 
-[Todas intruções Base RV32E](/docs/rv32e_instrucoes_base_priority.md)  
+[Todas intruções Base RV32E](/docs/rv32e_instrucao_base_full.md.md)  
 [Intrucões Prioridade para Implementar](/docs/rv32e_instrucoes_base_priority.md)  
 ![Encoding](/docs/encoding.png)  
 ![Encoding Imediate variantes](/docs//encoding_imediate_variant.png)  
