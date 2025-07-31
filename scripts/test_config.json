@@ -64,6 +64,12 @@
         ],
         "tb": "tb/components/tb_pc_generator.v"
     },
+    "register_file": {
+        "sources": [
+            "src/components/register_file.v"
+        ],
+        "tb": "tb/components/tb_register_file.v"
+    },
     "branch_unit": {
         "sources": [
             "src/components/branch_unit.v",
@@ -111,7 +117,14 @@
         ],
         "tb": "tb/control/tb_stall_controller.v"
     },
-     "pipeline_if_id_ex": {
+    "pipeline_registers": {
+        "sources": [
+            "src/core/pipeline_registers.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/core/tb_pipeline_registers.v"
+    },
+    "pipeline_if_id_ex": {
         "sources": [
             "src/components/pc_generator.v",
             "src/components/alu.v",
@@ -120,7 +133,7 @@
             "src/core/constants.v",
             "src/stages/if_stage.v",
             "src/stages/id_stage.v",
-            "src/stages/ex_stage.v"   
+            "src/stages/ex_stage.v"
         ],
         "tb": "tb/stages/tb_pipeline_stages.v"
     },
