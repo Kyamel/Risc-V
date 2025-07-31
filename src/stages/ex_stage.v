@@ -79,11 +79,12 @@ module ex_stage (
     assign alu_input_b = alu_src ? id_ex_immediate : forwarded_rs2;
 
     // ========== INSTÂNCIA DA ALU ==========
+    wire [31:0] alu_result;
     alu alu_unit (
         .a(alu_input_a),
         .b(alu_input_b),
         .alu_control(alu_op),
-        .result(ex_mem_alu_result_fwd),
+        .result(alu_result),
         .zero(alu_zero)
     );
 
@@ -117,7 +118,7 @@ module ex_stage (
             ex_mem_valid <= 0;
         end else begin
             ex_mem_pc <= id_ex_pc;
-            ex_mem_alu_result <= ex_mem_alu_result_fwd;
+            ex_mem_alu_result <= alu_result;
             ex_mem_rs2_data <= forwarded_rs2;
             ex_mem_rd_addr <= id_ex_rd_addr;
             ex_mem_control_signals <= id_ex_control_signals;
@@ -126,6 +127,6 @@ module ex_stage (
     end
 
     // Conexão para forwarding
-    assign ex_mem_alu_result_fwd = ex_mem_alu_result_fwd;
+    assign ex_mem_alu_result_fwd = alu_result;
 
 endmodule
