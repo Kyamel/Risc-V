@@ -186,7 +186,7 @@ module rv32e_cpu (
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
         .mem_wb_control_signals(mem_wb_control_signals),
-        .wb_data(wb_data),
+        .wb_data(wb_data)
     );
     
     // Control Unit
