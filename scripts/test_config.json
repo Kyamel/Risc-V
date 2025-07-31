@@ -135,7 +135,14 @@
             "src/stages/id_stage.v",
             "src/stages/ex_stage.v"
         ],
-        "tb": "tb/stages/tb_pipeline_stages.v"
+        "tb": "tb/pipeline/tb_pipeline_stages.v"
+    },
+    "processor_load_program": {
+        "sources": [
+            "src/memory/instruction_memory.v",
+            "src/components/register_file.v"
+        ],
+        "tb": "tb/pipeline/tb_processor_load_program.v"
     },
     "rv32e_cpu": {
         "sources": [
