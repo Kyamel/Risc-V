@@ -30,8 +30,15 @@ try {
 // Processa cada linha de assembly
 const output = [];
 for (const asm of assemblyLines) {
+  let instruction = asm.trim();
+
+  // Tradução de pseudoinstrução "nop"
+  if (instruction.toLowerCase() === 'nop') {
+    instruction = 'addi x0, x0, 0';
+  }
+
   try {
-    const encoder = new Encoder(asm.trim(), config);
+    const encoder = new Encoder(instruction, config);
     const binary = encoder.bin;
     const hex = parseInt(binary, 2).toString(16).padStart(8, '0'); // 32 bits = 8 hex chars
     output.push({
