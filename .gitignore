@@ -2,4 +2,7 @@ build/
 src/backup
 testbench_backup
 encoder/
-dump.vcd
+
+*.vcd
+*.bin
+*.hex
