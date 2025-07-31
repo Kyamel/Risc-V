@@ -165,5 +165,3 @@ module pipeline_registers (
     end
 
 endmodule
-
-CONTROL_SIGNALS_WIDTH definido em constants.v

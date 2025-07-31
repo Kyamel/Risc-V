@@ -54,14 +54,18 @@ module tb_wb_stage;
         check("Mem result (CTRL_MEM_TO_REG = 1)", wb_data, 32'hCAFEBABE);
 
         // -------------------
-        // Teste: Registrador não deve escrever quando reg_write = 0
+        // Teste: Verificar se a seleção ainda funciona com reg_write = 0
         // -------------------
         mem_wb_control_signals[`CTRL_REG_WRITE] = 0;
         mem_wb_alu_result = 32'h12345678;
         mem_wb_mem_data = 32'h87654321;
+        mem_wb_control_signals[`CTRL_MEM_TO_REG] = 0; // Seleciona ALU result
         #1;
-        // O valor deve permanecer o mesmo pois reg_write está desativado
-        check("Reg write disabled", wb_data, 32'hCAFEBABE);
+        check("Seleção com reg_write=0 (ALU)", wb_data, 32'h12345678);
+
+        mem_wb_control_signals[`CTRL_MEM_TO_REG] = 1; // Seleciona mem data
+        #1;
+        check("Seleção com reg_write=0 (Mem)", wb_data, 32'h87654321);
 
         $display("\n---- FIM DOS TESTES ----\n");
         $finish;

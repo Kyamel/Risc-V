@@ -15,7 +15,7 @@ if (process.argv.length < 3) {
 }
 
 const inputFile = process.argv[2];
-const outputFile = process.argv[3] || 'output.bin'; // Nome padrão do arquivo de saída
+const outputFile = process.argv[3] || 'output'; // Nome padrão do arquivo de saída
 
 // Lê o arquivo de entrada
 let assemblyLines;

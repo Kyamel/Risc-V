@@ -2,11 +2,11 @@
 
 module if_stage (
     input wire clk,
-    input wire reset,            // Padronizado para 'reset'
-    input wire stall,            // Congelamento do pipeline
-    input wire flush,            // Limpeza do pipeline
-    input wire pc_src,           // Controle de desvio (antigo branch_taken)
-    input wire [31:0] new_pc,    // Novo PC (antigo branch_target)
+    input wire reset,
+    input wire stall,
+    input wire flush,
+    input wire pc_src,         // Substitui o flush para controle de desvio
+    input wire [31:0] new_pc,
     
     // Interface com a memória de instruções
     output wire [31:0] imem_addr,
@@ -19,26 +19,27 @@ module if_stage (
     output reg if_id_valid
 );
 
-    reg [31:0] pc_reg;
-
-    // Lógica de atualização do PC
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            pc_reg <= 32'h00000000;  // Reset assíncrono
-        end else if (!stall) begin
-            pc_reg <= pc_src ? new_pc : pc_reg + 4;
-        end
-    end
+    wire [31:0] pc_current;
+    
+    // Instância do pc_generator
+    pc_generator pc_gen (
+        .clk(clk),
+        .reset(reset),
+        .stall(stall),
+        .flush(pc_src),  // Usamos pc_src como flush para desvio
+        .new_pc(new_pc),
+        .pc_out(pc_current)
+    );
 
     // Atribuição contínua para a memória
-    assign imem_addr = pc_reg;
-    assign imem_read = !stall;  // Só lê memória quando não está stallado
+    assign imem_addr = pc_current;
+    assign imem_read = !stall;
 
     // Estágio de registro IF/ID
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             if_id_pc <= 32'h00000000;
-            if_id_instruction <= 32'h00000000;  // NOP (0x00000013)
+            if_id_instruction <= 32'h00000013;  // NOP
             if_id_valid <= 1'b0;
         end else if (flush) begin
             // Limpa o registro em caso de flush
@@ -47,7 +48,7 @@ module if_stage (
             if_id_valid <= 1'b0;
         end else if (!stall) begin
             // Registro normal
-            if_id_pc <= pc_reg;
+            if_id_pc <= pc_current;
             if_id_instruction <= imem_data;
             if_id_valid <= 1'b1;
         end

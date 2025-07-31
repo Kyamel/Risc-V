@@ -47,11 +47,13 @@ module tb_alu;
         test_case(4'b0101, 32'h00000001, 5, 32'h00000020, 0); // SLL
         test_case(4'b0110, 32'h80000000, 31, 32'h00000001, 0); // SRL
         test_case(4'b0111, 32'h80000000, 31, 32'hFFFFFFFF, 0); // SRA (aritmético)
-        test_case(4'b1000, -5, 3, 1, 0);          // SLT signed
-        test_case(4'b1000, 3, -5, 0, 0);
-        test_case(4'b1001, 3, 5, 1, 0);           // SLTU unsigned
-        test_case(4'b1001, 5, 3, 0, 0);
         test_case(4'b1010, 0, 32'hDEADBEEF, 32'hDEADBEEF, 0); // LUI (passa b)
+
+        test_case(4'b1000, -5, 3, 1, 0);     // SLT (a < b) => result=1, zero=0
+        test_case(4'b1000, 3, -5, 0, 1);     // SLT (a >= b) => result=0, zero=1
+        test_case(4'b1001, 3, 5, 1, 0);      // SLTU (a < b) => result=1, zero=0
+        test_case(4'b1001, 5, 3, 0, 1);      // SLTU (a >= b) => result=0, zero=1
+    
 
         $display("\n== Fim dos testes da ALU ==");
         $finish;
