@@ -144,6 +144,13 @@
         ],
         "tb": "tb/pipeline/tb_processor_load_program.v"
     },
+    "pipeline_mem_stage":{
+        "sources":[
+            "src/stages/mem_stage.v",
+            "src/core/constants.v"
+        ],
+        "tb":"tb/pipeline/tb_pipeline_mem_stage.v"
+    },
     "rv32e_cpu": {
         "sources": [
             "src/core/rv32e_cpu.v",
