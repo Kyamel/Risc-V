@@ -1,16 +1,15 @@
-`timescale 1ns / 1ps
 `include "constants.v"
 
 module rv32e_cpu (
     input wire clk,
     input wire reset,
     
-    // Instruction memory interface
+    // Interface com a memória de instruções
     output wire [31:0] imem_addr,
     input wire [31:0] imem_data,
     output wire imem_read,
     
-    // Data memory interface
+    // Interface com a memória de dados
     output wire [31:0] dmem_addr,
     input wire [31:0] dmem_data_in,
     output wire [31:0] dmem_data_out,
@@ -18,7 +17,7 @@ module rv32e_cpu (
     output wire dmem_write,
     output wire [3:0] dmem_byte_enable,
     
-    // Debug signals
+    // Sinais de debug
     output wire [31:0] debug_pc,
     output wire [31:0] debug_registers [0:15],
     output wire [31:0] debug_instruction,
@@ -26,13 +25,13 @@ module rv32e_cpu (
     output wire debug_flush
 );
 
-    // Pipeline stage registers
+    // Sinais entre os estágios do pipeline
     // IF/ID
     wire [31:0] if_id_pc;
     wire [31:0] if_id_instruction;
     wire if_id_valid;
     
-    // ID/EX 
+    // ID/EX
     wire [31:0] id_ex_pc;
     wire [31:0] id_ex_instruction;
     wire [31:0] id_ex_rs1_data;
@@ -60,31 +59,23 @@ module rv32e_cpu (
     wire [`CONTROL_SIGNALS_WIDTH-1:0] mem_wb_control_signals;
     wire mem_wb_valid;
     
-    // Control signals
+    // Sinais de controle
     wire stall;
     wire flush;
     wire [31:0] new_pc;
     wire pc_src;
     
-    // Forwarding signals
+    // Sinais de forwarding
     wire [1:0] forward_a;
     wire [1:0] forward_b;
     
-    // Register file connections
+    // Conexões do banco de registradores
     wire [31:0] rs1_data;
     wire [31:0] rs2_data;
     wire [4:0] rs1_addr;
     wire [4:0] rs2_addr;
     
-    // Additional wire declarations
-    wire [31:0] wb_data;
-    wire [31:0] ex_mem_alu_result_fwd;
-    wire branch_taken;
-    wire [31:0] branch_target;
-    wire [31:0] instruction;
-    wire [`CONTROL_SIGNALS_WIDTH-1:0] control_signals;
-
-    // IF Stage
+    // Instanciação dos estágios do pipeline
     if_stage instruction_fetch (
         .clk(clk),
         .reset(reset),
@@ -100,7 +91,6 @@ module rv32e_cpu (
         .if_id_valid(if_id_valid)
     );
     
-    // ID Stage
     id_stage instruction_decode (
         .clk(clk),
         .reset(reset),
@@ -128,7 +118,6 @@ module rv32e_cpu (
         .rs2_data(rs2_data)
     );
     
-    // EX Stage
     ex_stage execute (
         .clk(clk),
         .reset(reset),
@@ -157,7 +146,7 @@ module rv32e_cpu (
         .branch_target(branch_target)
     );
     
-    // MEM Stage
+    
     mem_stage memory_access (
         .clk(clk),
         .reset(reset),
@@ -181,7 +170,7 @@ module rv32e_cpu (
         .mem_wb_valid(mem_wb_valid)
     );
     
-    // WB Stage
+    
     wb_stage write_back (
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
@@ -189,14 +178,12 @@ module rv32e_cpu (
         .wb_data(wb_data)
     );
     
-    // Control Unit
-    assign instruction = if_id_instruction;  // Connect IF/ID instruction to control unit
+    // Instanciação dos componentes de controle
     control_unit control_unit (
         .instruction(instruction),
         .control_signals(control_signals)
     );
     
-    // Hazard Detection
     hazard_detection hazard_detection (
         .id_ex_rd_addr(id_ex_rd_addr),
         .id_ex_mem_read(id_ex_control_signals[`CTRL_MEM_READ]),
@@ -205,7 +192,6 @@ module rv32e_cpu (
         .stall(stall)
     );
     
-    // Forwarding Unit
     forwarding_unit forwarding_unit (
         .id_ex_rs1_addr(id_ex_rs1_addr),
         .id_ex_rs2_addr(id_ex_rs2_addr),
@@ -217,7 +203,6 @@ module rv32e_cpu (
         .forward_b(forward_b)
     );
     
-    // Branch Unit
     branch_unit branch_unit (
         .id_ex_pc(id_ex_pc),
         .id_ex_instruction(id_ex_instruction),
@@ -230,13 +215,13 @@ module rv32e_cpu (
         .flush(flush)
     );
     
-    // Debug connections
+    // Conexões de debug
     assign debug_pc = if_id_pc;
     assign debug_instruction = if_id_instruction;
     assign debug_stall = stall;
     assign debug_flush = flush;
     
-    // Register File (16 registers for RV32E)
+    // Banco de registradores (16 registradores para RV32E)
     register_file #(
         .WIDTH(32),
         .DEPTH(16)

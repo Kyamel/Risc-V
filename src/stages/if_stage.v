@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module if_stage (
     input wire clk,
     input wire reset,            // Padronizado para 'reset'
