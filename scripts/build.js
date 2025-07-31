@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
 
 // Configurações de diretórios
 const SRC_DIR = "src";
@@ -8,6 +8,8 @@ const TB_DIR = "tb";
 const BUILD_DIR = "build";
 const BIN_DIR = path.join(BUILD_DIR, "bin");
 const LOG_DIR = path.join(BUILD_DIR, "log");
+
+// Caminho para o arquivo de configuração (relativo ao script)
 const CONFIG_PATH = path.join(__dirname, 'test_config.json');
 
 // Carrega a configuração dos módulos do JSON
@@ -18,9 +20,9 @@ const MODULES = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
  * @param {string} moduleName Nome do módulo
  * @param {string[]} sources Lista de arquivos fonte
  * @param {string} tbFile Arquivo de testbench
- * @returns {boolean} True se o teste passou, False caso contrário
+ * @returns {Promise<boolean>} True se o teste passou, False caso contrário
  */
-function runIcarus(moduleName, sources, tbFile) {
+async function runIcarus(moduleName, sources, tbFile) {
     // Cria diretórios se não existirem
     fs.mkdirSync(BIN_DIR, { recursive: true });
     fs.mkdirSync(LOG_DIR, { recursive: true });
@@ -35,64 +37,83 @@ function runIcarus(moduleName, sources, tbFile) {
         "-I", path.join(SRC_DIR, "core"),
         ...sources,
         tbFile
-    ].join(' ');
+    ];
 
     console.log(`\n🔧 Compilando módulo: ${moduleName}`);
     
     try {
         // Executa a compilação
-        const compileOutput = execSync(compileCmd, { 
-            encoding: 'utf-8',
-            stdio: ['inherit', 'pipe', 'pipe'] // stdin, stdout, stderr
-        });
-
-        // Salva logs de compilação
-        fs.writeFileSync(logCompile, compileOutput.stdout || '');
-        if (compileOutput.stderr) {
-            fs.appendFileSync(logCompile, `\n${compileOutput.stderr}`);
+        const compileResult = await executeCommand(compileCmd, logCompile);
+        if (!compileResult.success) {
+            console.log("❌ Erro na compilação. Verifique o log:");
+            console.log(`   📝 ${logCompile}`);
+            return false;
         }
 
         console.log("🚀 Executando simulação...");
         
         // Executa a simulação
-        const simOutput = execSync(`vvp ${outputFile}`, { 
-            encoding: 'utf-8',
-            stdio: ['inherit', 'pipe', 'pipe'] // stdin, stdout, stderr
-        });
-
-        // Exibe e salva a saída da simulação
-        console.log(simOutput.stdout || '');
-        if (simOutput.stderr) {
-            console.log("⚠️ STDERR:");
-            console.log(simOutput.stderr);
-        }
-
-        fs.writeFileSync(logSim, simOutput.stdout || '');
-        if (simOutput.stderr) {
-            fs.appendFileSync(logSim, `\n${simOutput.stderr}`);
+        const simResult = await executeCommand(["vvp", outputFile], logSim, true);
+        
+        if (!simResult.success) {
+            console.log("❌ Erro na simulação. Verifique o log:");
+            console.log(`   📝 ${logSim}`);
+            return false;
         }
 
         console.log(`✅ Teste de '${moduleName}' passou!`);
         return true;
     } catch (error) {
-        // Tratamento de erros
-        if (error.stdout) {
-            console.log(error.stdout);
-            fs.writeFileSync(logCompile, error.stdout);
-        }
-        if (error.stderr) {
-            console.log("❌ Erros:");
-            console.log(error.stderr);
-            fs.appendFileSync(logCompile, `\n${error.stderr}`);
-        }
-
-        console.log(`❌ Erro no teste de '${moduleName}'. Verifique o log:`);
-        console.log(`   📝 ${error.signal ? logSim : logCompile}`);
+        console.error(`❌ Erro inesperado: ${error.message}`);
         return false;
     }
 }
 
-function main() {
+/**
+ * Executa um comando e captura a saída
+ * @param {string[]} command Comando e argumentos
+ * @param {string} logFile Arquivo de log
+ * @param {boolean} showOutput Mostrar saída no console
+ * @returns {Promise<{success: boolean}>} Resultado da execução
+ */
+function executeCommand(command, logFile, showOutput = false) {
+    return new Promise((resolve) => {
+        const logStream = fs.createWriteStream(logFile);
+        const child = spawn(command[0], command.slice(1));
+
+        let output = '';
+        
+        child.stdout.on('data', (data) => {
+            const strData = data.toString();
+            output += strData;
+            if (showOutput) {
+                process.stdout.write(strData);
+            }
+        });
+
+        child.stderr.on('data', (data) => {
+            const strData = data.toString();
+            output += strData;
+            if (showOutput) {
+                process.stderr.write(strData);
+            }
+        });
+
+        child.on('close', (code) => {
+            logStream.write(output);
+            logStream.end();
+            resolve({ success: code === 0 });
+        });
+
+        child.on('error', (error) => {
+            logStream.write(`Error: ${error.message}\n`);
+            logStream.end();
+            resolve({ success: false });
+        });
+    });
+}
+
+async function main() {
     // Cria diretórios se não existirem
     fs.mkdirSync(BIN_DIR, { recursive: true });
     fs.mkdirSync(LOG_DIR, { recursive: true });
@@ -115,7 +136,7 @@ function main() {
         console.log(`🧪 Iniciando teste do módulo: ${module}`);
         
         const info = MODULES[module];
-        const success = runIcarus(
+        const success = await runIcarus(
             module,
             info.sources,
             info.tb
