@@ -13,13 +13,14 @@ module immediate_generator (
             
             // S-type (SW)
             7'b0100011:
-                // Corrected: Properly combine offset parts [11:5] and [4:0]
+                // S-type: imm[11:0] = {instr[31:25], instr[11:7]}
                 imm_out = {{20{instr[31]}}, instr[31:25], instr[11:7]};  // Sign-extended 12-bit
             
             // B-type (BEQ, BNE, etc.)
             7'b1100011:
-                // Corrected: Proper B-type immediate format [12|10:5|4:1|11]
-                imm_out = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
+                // B-type: imm[12:1] = {instr[31], instr[7], instr[30:25], instr[11:8]}
+                // The immediate is {imm[12], imm[10:5], imm[4:1], imm[11], 1'b0}
+                imm_out = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
             
             // U-type (LUI, AUIPC)
             7'b0110111, 7'b0010111:
@@ -27,8 +28,9 @@ module immediate_generator (
             
             // J-type (JAL)
             7'b1101111:
-                // Corrected: Proper J-type immediate format [20|10:1|11|19:12]
-                imm_out = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
+                // J-type: imm[20:1] = {instr[31], instr[19:12], instr[20], instr[30:21]}
+                // The immediate is {imm[20], imm[10:1], imm[11], imm[19:12], 1'b0}
+                imm_out = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
             
             default:
                 imm_out = 32'b0;

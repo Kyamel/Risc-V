@@ -94,29 +94,29 @@ module tb_immediate_generator;
         test_imm("ADDI +10", 32'h0000000A, 1);
 
         // S-type test
-        instr = 32'b1111111_00001_00010_010_01000_0100011; // SW x1, -8(x2)
+        instr = 32'b1111111_00001_00010_010_11000_0100011; // SW x1, -8(x2) - corrigido
         test_imm("SW -8", 32'hFFFFFFF8, 1);
 
         // B-type tests
         instr = 32'b0_000000_00010_00001_000_0000_0_1100011; // BEQ x1, x2, 0
         test_imm("BEQ 0", 32'h00000000, 1);
         
-        instr = 32'b0_000001_00010_00001_000_0000_0_1100011; // BEQ x1, x2, +4 (real offset is 8)
-        test_imm("BEQ +4", 32'h00000008, 1); // corrigido: shift 1
+        instr = 32'b0_000000_00010_00001_000_0100_0_1100011; // BEQ x1, x2, +8 - imm[4:1]=0100, imm[11]=0
+        test_imm("BEQ +4", 32'h00000008, 1); 
         
-        instr = 32'b1_111111_00010_00001_000_1111_0_1100011; // BEQ x1, x2, -4 (real offset is -8)
-        test_imm("BEQ -4", 32'hFFFFFFF8, 1); 
+        instr = 32'b1_111111_00010_00001_000_1100_1_1100011; // BEQ x1, x2, -8 - imm[4:1]=1100, imm[11]=1
+        test_imm("BEQ -4", 32'hFFFFFFF8, 1);
 
         // U-type test
         instr = 32'b00010010001101000101_00001_0110111; // LUI x1, 0x12345
         test_imm("LUI 0x12345", 32'h12345000, 0);
         
         // J-type tests
-        instr = 32'b0_0000001000_0_00000000_00000_1101111; // JAL x0, 2048 (2048 >> 1 = 1024)
+        instr = 32'b0_0000000000_1_00000000_00000_1101111; // JAL x0, +2048 - imm[11]=1, outros zerados
         test_imm("JAL 2048", 32'h00000800, 1);
         
-        instr = 32'b1_1111110000_1_11111111_11111_1101111; // JAL x31, -2048 (imm = 0xFFFFF800)
-        test_imm("JAL -2048", 32'hFFFFF800, 1); 
+        instr = 32'b1_0000000000_1_11111111_11111_1101111; // JAL x31, -2048 - imm[11]=1, imm[19:12]=0xFF
+        test_imm("JAL -2048", 32'hFFFFF800, 1);
 
         $finish;
     end
