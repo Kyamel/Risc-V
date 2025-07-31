@@ -1,15 +1,13 @@
-`timescale 1ns/1ps
-`include "constants.v"
-
 module tb_instruction_memory;
 
+    // --- Sinais de Conexão com o DUT ---
     reg clk = 0;
     reg reset;
     reg [31:0] addr;
     wire [31:0] data_out;
     reg read_en;
 
-    // Interface de debug
+    // --- Sinais da Interface de Debug ---
     reg debug_en;
     reg [31:0] debug_addr;
     reg [31:0] debug_data_in;
@@ -17,12 +15,13 @@ module tb_instruction_memory;
     wire [31:0] debug_data_out;
 
     // Variável de iteração
-    reg [31:0] i;
+    integer i;
 
-    // Clock
+    // --- Geração de Clock ---
+    // Gera um clock com período de 10ns (100MHz)
     always #5 clk = ~clk;
 
-    // DUT
+    // --- Instanciação do Módulo sob Teste (DUT) ---
     instruction_memory dut (
         .clk(clk),
         .reset(reset),
@@ -36,7 +35,8 @@ module tb_instruction_memory;
         .debug_data_out(debug_data_out)
     );
 
-    // Checagem
+    // --- Task de Verificação ---
+    // Compara um valor obtido com um valor esperado e imprime o resultado.
     task check(string name, input [31:0] got, input [31:0] expected);
         begin
             if (got !== expected) begin
@@ -47,87 +47,94 @@ module tb_instruction_memory;
         end
     endtask
 
+    // --- Sequência de Teste Principal ---
     initial begin
-        // Dump para GTKWave
+        // Configuração do dump de formas de onda para depuração visual
         $dumpfile("dump.vcd");
         $dumpvars(0, tb_instruction_memory);
         
-        // Inicializa memória com NOPs explicitamente para teste
-        for (i = 0; i < 1024; i = i + 1) begin
-            dut.mem[i] = 32'h00000013;
-        end
+        // Aguarda um pequeno instante para a memória ser inicializada pelo $readmemh
+        #1; 
         
-        // Dump manual de parte da memória
         $display("\n---- DUMP INICIAL DAS PRIMEIRAS INSTRUÇÕES ----");
         for (i = 0; i < 8; i = i + 1) begin
+            // Acessa a memória interna do DUT para verificação (apenas em simulação)
             $display("mem[%0d] = %h", i, dut.mem[i]);
         end
-        
         $display("-----------------------------------------------\n");
 
         $display("\n---- TESTE INSTRUCTION_MEMORY ----\n");
 
-        // Reset inicial
-        reset = 1;
-        read_en = 0;
+        // --- Estado Inicial dos Sinais ---
+        reset = 1; // Inicia com o processador em reset
+        read_en = 1; // Habilita a leitura para observar a saída
         debug_en = 0;
         debug_write_en = 0;
-        addr = 0;
-        debug_addr = 0;
-        debug_data_in = 0;
+        addr = 32'h0;
+        debug_addr = 32'h0;
+        debug_data_in = 32'h0;
 
+        // Aguarda um ciclo de clock completo com o reset ativo
         #10;
-        reset = 0;
 
-        // -------------------------------
-        // 1. Verifica se no reset sai NOP
-        // -------------------------------
-        addr = 32'h00000000;
-        read_en = 1;
-        #10;
+        // -----------------------------------------------------------------
+        // 1. Verifica se a saída é NOP *enquanto o reset está ativo*
+        //    Esta é a correção principal. A verificação ocorre após o
+        //    primeiro posedge do clock com reset=1.
+        // -----------------------------------------------------------------
         check("Reset retorna NOP", data_out, 32'h00000013);
+        
+        // Libera o reset
+        reset = 0;
+        
+        // Aguarda um ciclo de clock para a primeira leitura normal ocorrer
+        #10;
+        
+        // -----------------------------------------------------------------
+        // 1.1. Verifica a leitura normal do endereço 0 após o reset
+        // -----------------------------------------------------------------
+        check("Leitura normal de addr 0 pós-reset", data_out, dut.mem[0]);
 
-        // -------------------------------
+
+        // -----------------------------------------------------------------
         // 2. Escreve via interface de debug
-        // -------------------------------
+        // -----------------------------------------------------------------
         debug_en = 1;
         debug_write_en = 1;
-        debug_addr = 32'h00000008; // palavra 2
+        debug_addr = 32'h00000020; // Endereço 0x20 (palavra 8)
         debug_data_in = 32'hCAFEBABE;
-        #10;
+        #10; // Aguarda um ciclo para a escrita síncrona ocorrer
 
-        // -------------------------------
-        // 3. Lê instrução via porta normal
-        // -------------------------------
-        read_en = 1;
-        addr = 32'h00000008; // mesma posição
-        debug_write_en = 0;
-        #10;
+        // -----------------------------------------------------------------
+        // 3. Lê instrução via porta normal no endereço modificado
+        // -----------------------------------------------------------------
+        addr = 32'h00000020;
+        debug_write_en = 0; // Desliga a escrita para o próximo teste
+        #10; // Aguarda um ciclo para a leitura ocorrer
         check("Leitura normal após escrita debug", data_out, 32'hCAFEBABE);
 
-        // -------------------------------
-        // 4. Lê via debug_data_out
-        // -------------------------------
+        // -----------------------------------------------------------------
+        // 4. Lê via debug_data_out (leitura combinacional)
+        // -----------------------------------------------------------------
+        // Não precisa esperar, a leitura via debug é imediata (assign)
         check("Leitura via debug_data_out", debug_data_out, 32'hCAFEBABE);
 
-        // -------------------------------
+        // -----------------------------------------------------------------
         // 5. Escrita sem debug_en = deve ser ignorada
-        // -------------------------------
-        debug_en = 0;
+        // -----------------------------------------------------------------
+        debug_en = 0; // Desabilita a interface de debug
         debug_write_en = 1;
-        debug_addr = 32'h0000000C;
+        debug_addr = 32'h00000030; // Endereço 0x30 (palavra 12)
         debug_data_in = 32'hDEADBEEF;
-        #10;
+        #10; // Aguarda um ciclo
 
-        addr = 32'h0000000C;
-        read_en = 1;
-        #10;
-        check("Escrita ignorada sem debug_en", data_out, 32'h00000013); // deve continuar sendo NOP
+        addr = 32'h00000030;
+        #10; // Aguarda um ciclo para a leitura
+        // O valor deve ser o NOP original, pois a escrita foi ignorada
+        check("Escrita ignorada sem debug_en", data_out, 32'h00000013);
 
         $display("\n---- FIM DOS TESTES ----\n");
         $finish;
-        
     end
-    
 
 endmodule

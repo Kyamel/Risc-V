@@ -3,7 +3,7 @@
 
 module tb_mem_stage;
 
-    // Entradas
+    // --- Entradas para o DUT (simulando o pipeline register EX/MEM) ---
     reg clk = 0;
     reg reset = 0;
     reg [31:0] ex_mem_pc;
@@ -13,23 +13,25 @@ module tb_mem_stage;
     reg [`CONTROL_SIGNALS_WIDTH-1:0] ex_mem_control_signals;
     reg ex_mem_valid;
 
-    // Memória
-    reg [31:0] dmem_data_in;
+    // --- Interface com a Memória de Dados (DUT -> Testbench) ---
     wire [31:0] dmem_addr;
-    wire [31:0] dmem_data_out;
-    wire dmem_read;
-    wire dmem_write;
-    wire [3:0] dmem_byte_enable;
+    wire [31:0] dmem_data_out; // DUT escreve na memória
+    wire        dmem_read;
+    wire        dmem_write;
+    wire [3:0]  dmem_byte_enable;
+    
+    // --- Simulação da Memória de Dados (Testbench -> DUT) ---
+    reg [31:0] dmem_data_in; // Dado lido da memória
 
-    // Saídas WB
+    // --- Saídas do DUT (para o pipeline register MEM/WB) ---
     wire [31:0] mem_wb_pc;
     wire [31:0] mem_wb_alu_result;
     wire [31:0] mem_wb_mem_data;
     wire [4:0]  mem_wb_rd_addr;
     wire [`CONTROL_SIGNALS_WIDTH-1:0] mem_wb_control_signals;
-    wire mem_wb_valid;
+    wire        mem_wb_valid;
 
-    // DUT
+    // --- Instanciação do Módulo sob Teste (DUT) ---
     mem_stage dut (
         .clk(clk),
         .reset(reset),
@@ -53,10 +55,10 @@ module tb_mem_stage;
         .mem_wb_valid(mem_wb_valid)
     );
 
-    // Clock
+    // --- Geração de Clock ---
     always #5 clk = ~clk;
 
-    // Função de checagem
+    // --- Task de Verificação ---
     task check;
         input string name;
         input [31:0] got;
@@ -70,6 +72,7 @@ module tb_mem_stage;
     end
     endtask
 
+    // --- Sequência de Teste Principal ---
     initial begin
         $display("\n---- TESTE MEM_STAGE ----\n");
         reset = 1;
@@ -81,9 +84,9 @@ module tb_mem_stage;
         // Teste LBU (load byte unsigned)
         // -------------------
         ex_mem_pc = 32'h00000004;
-        ex_mem_alu_result = 32'h00000000; // endereço final
-        dmem_data_in = 32'hFF_00_00_00; // byte 0 = 0xFF
-        ex_mem_rs2_data = 32'hDEADBEEF; // dummy
+        ex_mem_alu_result = 32'h00000000; // Endereço final (byte 0)
+        dmem_data_in = 32'h123456FF;      // Byte 0 (LSB) = 0xFF
+        ex_mem_rs2_data = 32'hDEADBEEF;   // Dummy
         ex_mem_rd_addr = 5'd1;
 
         ex_mem_control_signals = 0;
@@ -97,8 +100,8 @@ module tb_mem_stage;
         // -------------------
         // Teste LB (load byte signed)
         // -------------------
-        ex_mem_alu_result = 32'h00000000;
-        dmem_data_in = 32'h80_00_00_00; // byte 0 = 0x80 (signed = -128)
+        ex_mem_alu_result = 32'h00000000; // Endereço final (byte 0)
+        dmem_data_in = 32'h12345680;      // Byte 0 (LSB) = 0x80 (signed = -128)
         ex_mem_control_signals[`CTRL_MEM_UNSIGNED] = 0;
         #10;
         check("LB", mem_wb_mem_data, 32'hFFFFFF80);
@@ -106,8 +109,8 @@ module tb_mem_stage;
         // -------------------
         // Teste LHU (load half unsigned)
         // -------------------
-        ex_mem_alu_result = 32'h00000002;
-        dmem_data_in = 32'h0000_FFFF; // half superior
+        ex_mem_alu_result = 32'h00000002; // Endereço final (half-word no byte 2)
+        dmem_data_in = 32'hFFFF1234;      // Half-word superior = 0xFFFF
         ex_mem_control_signals[`CTRL_MEM_WIDTH] = `MEM_HALF;
         ex_mem_control_signals[`CTRL_MEM_UNSIGNED] = 1;
         #10;
@@ -116,7 +119,8 @@ module tb_mem_stage;
         // -------------------
         // Teste LH (load half signed)
         // -------------------
-        dmem_data_in = 32'h0000_8000; // 0x8000 = -32768
+        ex_mem_alu_result = 32'h00000002; // Endereço final (half-word no byte 2)
+        dmem_data_in = 32'h80001234;      // Half-word superior = 0x8000 (signed = -32768)
         ex_mem_control_signals[`CTRL_MEM_UNSIGNED] = 0;
         #10;
         check("LH", mem_wb_mem_data, 32'hFFFF8000);
@@ -135,10 +139,11 @@ module tb_mem_stage;
         // -------------------
         ex_mem_alu_result = 32'h10000000;
         ex_mem_rs2_data = 32'h12345678;
-        ex_mem_control_signals = 0;
+        ex_mem_control_signals = 0; // Reseta sinais
         ex_mem_control_signals[`CTRL_MEM_WRITE] = 1;
         ex_mem_control_signals[`CTRL_MEM_WIDTH] = `MEM_WORD;
-        #1; // Wait for combinational logic
+        
+        #1; // Aguarda a lógica combinacional propagar
         check("SW addr", dmem_addr, 32'h10000000);
         check("SW data", dmem_data_out, 32'h12345678);
         check("SW write", dmem_write, 1'b1);
