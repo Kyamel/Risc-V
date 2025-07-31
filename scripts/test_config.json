@@ -105,6 +105,12 @@
         ],
         "tb": "tb/control/tb_hazard_detection.v"
     },
+    "stall_controller": {
+        "sources": [
+            "src/control/stall_controller.v"
+        ],
+        "tb": "tb/control/tb_stall_controller.v"
+    },
     "rv32e_cpu": {
         "sources": [
             "src/core/rv32e_cpu.v",
@@ -117,6 +123,7 @@
             "src/control/control_unit.v",
             "src/control/hazard_detection.v",
             "src/control/forwarding_unit.v",
+            "src/control/stall_controller.v",
             "src/components/branch_unit.v",
             "src/components/register_file.v",
             "src/components/alu.v",
