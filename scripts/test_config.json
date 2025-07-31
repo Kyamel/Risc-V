@@ -159,6 +159,21 @@
         ],
         "tb":"tb/pipeline/tb_pipeline_mem_stage.v"
     },
+    "pipeline_load_and_exec":{
+        "sources":[
+            "src/memory/instruction_memory.v",
+            "src/components/register_file.v",
+
+            "src/components/alu.v",
+            "src/components/immediate_generator.v",
+            "src/control/control_unit.v",
+
+            "src/stages/if_stage.v",
+            "src/stages/id_stage.v",
+            "src/stages/ex_stage.v"
+        ],
+        "tb":"tb/pipeline/tb_pipeline_load_and_exec.v"
+    },
     "rv32e_cpu": {
         "sources": [
             "src/core/rv32e_cpu.v",
