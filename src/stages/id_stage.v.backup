@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "constants.v"
+`include "core/constants.v"
 
 module id_stage (
     input wire clk,
@@ -63,34 +63,6 @@ module id_stage (
     
     wire [31:0] rs2_data_bypassed = (mem_wb_reg_write && mem_wb_rd_addr == rs2_addr_full && rs2_addr_full != 0) 
                                   ? mem_wb_rd_data : rs2_data;
-    
-    // Lógica de avaliação de condições de branch
-    wire [2:0] branch_funct3 = if_id_instruction[14:12];
-    wire [6:0] opcode = if_id_instruction[6:0];
-    wire is_branch_instr = (opcode == `OP_BRANCH);
-    
-    // Avalia as condições de branch
-    reg branch_taken;
-    always @(*) begin
-        branch_taken = 0;
-        if (is_branch_instr) begin
-            case (branch_funct3)
-                `BRANCH_EQ:  branch_taken = (rs1_data_bypassed == rs2_data_bypassed);  // BEQ
-                `BRANCH_NE:  branch_taken = (rs1_data_bypassed != rs2_data_bypassed);  // BNE
-                `BRANCH_LT:  branch_taken = ($signed(rs1_data_bypassed) < $signed(rs2_data_bypassed));  // BLT
-                `BRANCH_GE:  branch_taken = ($signed(rs1_data_bypassed) >= $signed(rs2_data_bypassed)); // BGE
-                `BRANCH_LTU: branch_taken = (rs1_data_bypassed < rs2_data_bypassed);  // BLTU
-                `BRANCH_GEU: branch_taken = (rs1_data_bypassed >= rs2_data_bypassed); // BGEU
-                default:     branch_taken = 0;
-            endcase
-        end
-    end
-    
-    // Sinais de controle modificados - substitui o bit de branch pela condição avaliada
-    wire [`CONTROL_SIGNALS_WIDTH-1:0] control_signals_final;
-    assign control_signals_final = {control_signals[`CONTROL_SIGNALS_WIDTH-1:`CTRL_BRANCH+1], 
-                                   (is_branch_instr ? branch_taken : control_signals[`CTRL_BRANCH]), 
-                                   control_signals[`CTRL_BRANCH-1:0]};
     
     
 

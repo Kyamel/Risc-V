@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "core/constants.v"
+`include "constants.v"
 
 module tb_id_stage;
 
