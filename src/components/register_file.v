@@ -3,7 +3,7 @@
 
 module register_file #(
     parameter WIDTH = 32,  // Largura do registrador (32 bits)
-    parameter DEPTH = 16   // Número de registradores (x0-x15)
+    parameter DEPTH = 32   // Número de registradores (x0-x31)
 )(
     input wire clk,
     input wire reset,
