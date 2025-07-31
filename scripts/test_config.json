@@ -1,0 +1,107 @@
+{
+    "alu": {
+        "sources": [
+            "src/components/alu.v"
+        ],
+        "tb": "tb/components/tb_alu.v"
+    },
+    "ex_stage": {
+        "sources": [
+            "src/stages/ex_stage.v",
+            "src/components/alu.v",
+            "src/components/immediate_generator.v"
+        ],
+        "tb": "tb/stages/tb_ex_stage.v"
+    },
+    "id_stage": {
+        "sources": [
+            "src/stages/id_stage.v",
+            "src/components/immediate_generator.v",
+            "src/control/control_unit.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/stages/tb_id_stage.v"
+    },
+    "mem_stage": {
+        "sources": [
+            "src/stages/mem_stage.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/stages/tb_mem_stage.v"
+    },
+    "wb_stage": {
+        "sources": [
+            "src/stages/wb_stage.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/stages/tb_wb_stage.v"
+    },
+    "instruction_memory": {
+        "sources": [
+            "src/memory/instruction_memory.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/memory/tb_instruction_memory.v"
+    },
+    "data_memory": {
+        "sources": [
+            "src/memory/data_memory.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/memory/tb_data_memory.v"
+    },
+    "pc_generator": {
+        "sources": [
+            "src/components/pc_generator.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/components/tb_pc_generator.v"
+    },
+    "branch_unit": {
+        "sources": [
+            "src/components/branch_unit.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/components/tb_branch_unit.v"
+    },
+    "memory_interface": {
+        "sources": [
+            "src/components/memory_interface.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/components/tb_memory_interface.v"
+    },
+    "control_unit": {
+        "sources": [
+            "src/control/control_unit.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/control/tb_control_unit.v"
+    },
+    "forwarding_unit": {
+        "sources": [
+            "src/control/forwarding_unit.v",
+            "src/core/constants.v"
+        ],
+        "tb": "tb/control/tb_forwarding_unit.v"
+    },
+    "rv32e_cpu": {
+        "sources": [
+            "src/core/rv32e_cpu.v",
+            "src/core/constants.v",
+            "src/stages/if_stage.v",
+            "src/stages/id_stage.v",
+            "src/stages/ex_stage.v",
+            "src/stages/mem_stage.v",
+            "src/stages/wb_stage.v",
+            "src/control/control_unit.v",
+            "src/control/hazard_detection.v",
+            "src/control/forwarding_unit.v",
+            "src/components/branch_unit.v",
+            "src/components/register_file.v",
+            "src/components/alu.v",
+            "src/components/immediate_generator.v"
+        ],
+        "tb": "tb/core/tb_rv32e_cpu.v"
+    }
+}
