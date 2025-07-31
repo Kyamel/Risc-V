@@ -1,11 +1,11 @@
 $date
-	Thu Jul 31 11:06:01 2025
+	Thu Jul 31 13:33:23 2025
 $end
 $version
 	Icarus Verilog
 $end
 $timescale
-	1ps
+	1s
 $end
 $scope module tb_instruction_memory $end
 $var wire 32 ! debug_data_out [31:0] $end
@@ -16,9 +16,9 @@ $var reg 32 % debug_addr [31:0] $end
 $var reg 32 & debug_data_in [31:0] $end
 $var reg 1 ' debug_en $end
 $var reg 1 ( debug_write_en $end
-$var reg 32 ) i [31:0] $end
-$var reg 1 * read_en $end
-$var reg 1 + reset $end
+$var reg 1 ) read_en $end
+$var reg 1 * reset $end
+$var integer 32 + i [31:0] $end
 $scope module dut $end
 $var wire 32 , addr [31:0] $end
 $var wire 1 $ clk $end
@@ -27,98 +27,125 @@ $var wire 32 . debug_data_in [31:0] $end
 $var wire 32 / debug_data_out [31:0] $end
 $var wire 1 ' debug_en $end
 $var wire 1 ( debug_write_en $end
-$var wire 1 * read_en $end
-$var wire 1 + reset $end
-$var reg 32 0 data_out [31:0] $end
-$var integer 32 1 i [31:0] $end
+$var wire 1 ) read_en $end
+$var wire 1 * reset $end
+$var parameter 32 0 NOP $end
+$var reg 32 1 data_out [31:0] $end
+$var integer 32 2 i [31:0] $end
 $upscope $end
 $scope task check $end
-$var reg 32 2 expected [31:0] $end
-$var reg 32 3 got [31:0] $end
+$var reg 32 3 expected [31:0] $end
+$var reg 32 4 got [31:0] $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
 $comment Show the parameter values. $end
 $dumpall
+b10011 0
 $end
 #0
 $dumpvars
+bx 4
 bx 3
-bx 2
-b10000000000 1
-bx 0
-b10011 /
+b10000000000 2
+bx 1
+bx /
+bx .
+bx -
+bx ,
+bx +
+x*
+x)
+x(
+x'
+bx &
+bx %
+0$
+bx #
+bx "
+bx !
+$end
+#1
+b1100010000000010110011 !
+b1100010000000010110011 /
+b0 &
 b0 .
+b0 %
 b0 -
+b0 #
 b0 ,
-1+
-0*
-b1000 )
 0(
 0'
-b0 &
-b0 %
-0$
-b0 #
-bx "
-b10011 !
-$end
-#5000
-b10011 "
-b10011 0
-1$
-#10000
-0$
+1)
 1*
-0+
-#15000
+b1000 +
+#5
+b10011 "
+b10011 1
 1$
-#20000
+#10
 0$
+#11
+0*
+b10011 3
+b10011 4
+#15
+b1100010000000010110011 "
+b1100010000000010110011 1
+1$
+#20
+0$
+#21
+b10011 !
+b10011 /
 b11001010111111101011101010111110 &
 b11001010111111101011101010111110 .
-b1000 %
-b1000 -
+b100000 %
+b100000 -
 1(
 1'
-b10011 2
-b10011 3
-#25000
+b1100010000000010110011 3
+b1100010000000010110011 4
+#25
 b11001010111111101011101010111110 !
 b11001010111111101011101010111110 /
 1$
-#30000
+#30
 0$
+#31
 0(
-b1000 #
-b1000 ,
-#35000
+b100000 #
+b100000 ,
+#35
 b11001010111111101011101010111110 "
-b11001010111111101011101010111110 0
+b11001010111111101011101010111110 1
 1$
-#40000
+#40
+0$
+#41
 b10011 !
 b10011 /
-0$
 b11011110101011011011111011101111 &
 b11011110101011011011111011101111 .
-b1100 %
-b1100 -
+b110000 %
+b110000 -
 1(
 0'
-b11001010111111101011101010111110 2
 b11001010111111101011101010111110 3
-#45000
+b11001010111111101011101010111110 4
+#45
 1$
-#50000
+#50
 0$
-b1100 #
-b1100 ,
-#55000
+#51
+b110000 #
+b110000 ,
+#55
 b10011 "
-b10011 0
+b10011 1
 1$
-#60000
+#60
 0$
-b10011 2
+#61
 b10011 3
+b10011 4
