@@ -20,7 +20,7 @@ module rv32e_cpu (
     
     // Debug signals
     output wire [31:0] debug_pc,
-    output wire [31:0] debug_registers [0:15],
+    output wire [31:0] debug_registers [0:31],
     output wire [31:0] debug_instruction,
     output wire debug_stall,
     output wire debug_flush
@@ -239,7 +239,7 @@ module rv32e_cpu (
     // Register File (16 registers for RV32E)
     register_file #(
         .WIDTH(32),
-        .DEPTH(16)
+        .DEPTH(32)
     ) reg_file (
         .clk(clk),
         .reset(reset),
