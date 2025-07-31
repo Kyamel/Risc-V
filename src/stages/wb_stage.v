@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "constants.v"
+`include "core/constants.v"
 
 module wb_stage (
     // Entradas do registro MEM/WB

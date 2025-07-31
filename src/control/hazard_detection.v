@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "constants.v"
+`include "core/constants.v"
 
 module hazard_detection (
     // Sinais da instrução no estágio ID

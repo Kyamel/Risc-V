@@ -1,4 +1,4 @@
-`include "constants.v"
+`include "core/constants.v"
 
 module data_memory (
     input wire clk,

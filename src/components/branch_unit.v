@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "constants.v"
+`include "core/constants.v"
 
 module branch_unit (
     input wire [31:0] id_ex_pc,

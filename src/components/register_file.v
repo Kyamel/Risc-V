@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "constants.v"
+`include "core/constants.v"
 
 module register_file #(
     parameter WIDTH = 32,  // Largura do registrador (32 bits)

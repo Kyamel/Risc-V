@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "constants.v"
+`include "core/constants.v"
 
 module control_unit (
     input wire [31:0] instruction,  // Instrução completa para extração de campos

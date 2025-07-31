@@ -1,4 +1,4 @@
-`include "constants.v"
+`include "core/constants.v"
 
 module pipeline_registers (
     input wire clk,
