@@ -1,19 +1,27 @@
+`timescale 1ns / 1ps
+`include "constants.v"
+
 module hazard_detection (
     // Sinais da instrução no estágio ID
-    input wire [4:0] id_rs1_addr,
-    input wire [4:0] id_rs2_addr,
-
+    input wire [4:0] if_id_rs1_addr,  // Endereço do registrador fonte 1
+    input wire [4:0] if_id_rs2_addr,  // Endereço do registrador fonte 2
+    
     // Sinais da instrução no estágio EX (vindos do registrador ID/EX)
-    input wire [4:0] ex_rd_addr,
-    input wire       ex_memread, // Sinal de controle que indica uma instrução de load
-
-    // Saída de aviso
-    output wire      load_use_hazard
+    input wire [4:0] id_ex_rd_addr,   // Endereço do registrador destino
+    input wire id_ex_mem_read,        // Sinal CTRL_MEM_READ do estágio EX
+    
+    // Saída de controle
+    output reg stall                  // Sinal de stall para o pipeline
 );
 
-    // A condição de hazard de "load-use" ocorre se a instrução no estágio EX
-    // é um load e seu registrador de destino é um dos fontes da instrução no estágio ID.
-    assign load_use_hazard = ex_memread && (ex_rd_addr != 5'b0) &&
-                           ((ex_rd_addr == id_rs1_addr) || (ex_rd_addr == id_rs2_addr));
+    always @(*) begin
+        // Hazard de load-use ocorre quando:
+        // 1. Instrução em EX é um load (mem_read=1)
+        // 2. O registrador destino não é x0
+        // 3. O registrador destino é um dos operandos da instrução atual
+        stall = id_ex_mem_read && 
+               (id_ex_rd_addr != 5'b0) && 
+               ((id_ex_rd_addr == if_id_rs1_addr) || (id_ex_rd_addr == if_id_rs2_addr));
+    end
 
 endmodule

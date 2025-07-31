@@ -101,7 +101,7 @@ module rv32e_cpu (
         .if_id_valid(if_id_valid),
         .mem_wb_rd_addr(mem_wb_rd_addr),
         .mem_wb_rd_data(wb_data),
-        .mem_wb_reg_write(mem_wb_control_signals[`REG_WRITE]),
+        .mem_wb_reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .id_ex_pc(id_ex_pc),
         .id_ex_instruction(id_ex_instruction),
         .id_ex_rs1_data(id_ex_rs1_data),
@@ -141,8 +141,11 @@ module rv32e_cpu (
         .forward_b(forward_b),
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
-        .ex_mem_alu_result_fwd(ex_mem_alu_result)
+        .ex_mem_alu_result_fwd(ex_mem_alu_result_fwd),
+        .branch_taken(branch_taken),
+        .branch_target(branch_target)
     );
+    
     
     mem_stage memory_access (
         .clk(clk),
@@ -167,6 +170,7 @@ module rv32e_cpu (
         .mem_wb_valid(mem_wb_valid)
     );
     
+    
     wb_stage write_back (
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
@@ -176,13 +180,13 @@ module rv32e_cpu (
     
     // Instanciação dos componentes de controle
     control_unit control_unit (
-        .instruction(if_id_instruction),
+        .instruction(instruction),
         .control_signals(control_signals)
     );
     
     hazard_detection hazard_detection (
         .id_ex_rd_addr(id_ex_rd_addr),
-        .id_ex_mem_read(id_ex_control_signals[`MEM_READ]),
+        .id_ex_mem_read(id_ex_control_signals[`CTRL_MEM_READ]),
         .if_id_rs1_addr(rs1_addr),
         .if_id_rs2_addr(rs2_addr),
         .stall(stall)
@@ -192,9 +196,9 @@ module rv32e_cpu (
         .id_ex_rs1_addr(id_ex_rs1_addr),
         .id_ex_rs2_addr(id_ex_rs2_addr),
         .ex_mem_rd_addr(ex_mem_rd_addr),
-        .ex_mem_reg_write(ex_mem_control_signals[`REG_WRITE]),
+        .ex_mem_reg_write(ex_mem_control_signals[`CTRL_REG_WRITE]),
         .mem_wb_rd_addr(mem_wb_rd_addr),
-        .mem_wb_reg_write(mem_wb_control_signals[`REG_WRITE]),
+        .mem_wb_reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .forward_a(forward_a),
         .forward_b(forward_b)
     );
@@ -228,7 +232,7 @@ module rv32e_cpu (
         .rs2_addr(rs2_addr),
         .rd_addr(mem_wb_rd_addr),
         .rd_data(wb_data),
-        .reg_write(mem_wb_control_signals[`REG_WRITE]),
+        .reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .rs1_data(rs1_data),
         .rs2_data(rs2_data),
         .debug_registers(debug_registers)

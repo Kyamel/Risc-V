@@ -20,7 +20,7 @@ module id_stage (
     
     // Interface de writeback
     input wire [4:0] mem_wb_rd_addr,
-    input wire [31:0] wb_data,
+    input wire [31:0] mem_wb_rd_data,
     input wire mem_wb_reg_write,
     
     // Registro ID/EX
@@ -47,9 +47,7 @@ module id_stage (
     
     // Instanciação da unidade de controle
     control_unit ctrl_unit (
-        .opcode(if_id_instruction[6:0]),
-        .funct3(if_id_instruction[14:12]),
-        .funct7(if_id_instruction[31:25]),
+        .instruction(if_id_instruction),
         .control_signals(control_signals)
     );
     
@@ -61,11 +59,13 @@ module id_stage (
     
     // Bypass lógico completo (considera WB e estágio MEM)
     wire [31:0] rs1_data_bypassed = (mem_wb_reg_write && mem_wb_rd_addr == rs1_addr_full && rs1_addr_full != 0) 
-                                  ? wb_data : rs1_data;
+                                  ? mem_wb_rd_data : rs1_data;
     
     wire [31:0] rs2_data_bypassed = (mem_wb_reg_write && mem_wb_rd_addr == rs2_addr_full && rs2_addr_full != 0) 
-                                  ? wb_data : rs2_data;
+                                  ? mem_wb_rd_data : rs2_data;
     
+    
+
     // Atribuição das saídas para register file
     assign rs1_addr = rs1_addr_full;
     assign rs2_addr = rs2_addr_full;
