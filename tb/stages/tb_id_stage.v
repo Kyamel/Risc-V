@@ -148,7 +148,7 @@ module tb_id_stage();
         check("ADDI x1, x0, 10",
               5'b00001,    // rd_addr
               5'b00000,   // rs1_addr
-              5'b00000,   // rs2_addr (unused)
+              5'b01010,   // rs2_addr (bits 24:20 of instruction, contains part of immediate)
               32'h00000000, // rs1_data (x0)
               32'h00000000, // rs2_data (unused)
               32'h0000000A, // immediate
@@ -156,11 +156,11 @@ module tb_id_stage();
               1'b1        // valid
         );
 
-        // Test 2: ADD instruction (R-type)
-        $display("\n%sTest 2: ADD x2, x1, x3%s", COLOR_YELLOW, COLOR_RESET);
-        if_id_instruction = 32'h003100B3; // ADD x2, x1, x3
+        // Test 2: ADD instruction (R-type) - correcting to match actual instruction
+        $display("\n%sTest 2: ADD x1, x2, x3%s", COLOR_YELLOW, COLOR_RESET);
+        if_id_instruction = 32'h003100B3; // ADD x1, x2, x3 (not x2, x1, x3)
         if_id_pc = 32'h00000008;
-        rs1_data = 32'h0000000A; // x1 value
+        rs1_data = 32'h0000000A; // x2 value (note: rs1 is x2 now)
         rs2_data = 32'h00000014; // x3 value
         #10;
         
@@ -169,26 +169,26 @@ module tb_id_stage();
         expected_ctrl[`CTRL_REG_WRITE] = 1'b1;
         expected_ctrl[`CTRL_ALU_OP] = `ALU_ADD;
         
-        check("ADD x2, x1, x3",
-              5'b00010,    // rd_addr
-              5'b00001,    // rs1_addr
-              5'b00011,    // rs2_addr
-              32'h0000000A, // rs1_data (x1)
+        check("ADD x1, x2, x3",
+              5'b00001,    // rd_addr (x1)
+              5'b00010,    // rs1_addr (x2)
+              5'b00011,    // rs2_addr (x3)
+              32'h0000000A, // rs1_data (x2)
               32'h00000014, // rs2_data (x3)
               32'h00000000, // immediate (unused)
               expected_ctrl, // control signals
               1'b1        // valid
         );
 
-        // Test 3: Bypass test (writeback to rs1)
+        // Test 3: Bypass test (writeback to rs1) - fixing expected values
         $display("\n%sTest 3: Register Bypass (WB to RS1)%s", COLOR_YELLOW, COLOR_RESET);
         if_id_instruction = 32'h00110133; // ADD x2, x2, x1
         if_id_pc = 32'h0000000C;
-        mem_wb_rd_addr = 5'b00001;    // x1 being written
-        mem_wb_rd_data = 32'h0000001E; // new x1 value
+        mem_wb_rd_addr = 5'b00010;    // x2 being written (rs1)
+        mem_wb_rd_data = 32'h0000001E; // new x2 value
         mem_wb_reg_write = 1'b1;
-        rs1_data = 32'h0000000A;     // old x1 value (should be bypassed)
-        rs2_data = 32'h00000014;     // x3 value
+        rs1_data = 32'h0000000A;     // old x2 value (should be bypassed)
+        rs2_data = 32'h00000014;     // x1 value
         #10;
         
         // Create expected control signals for ADD
@@ -197,17 +197,17 @@ module tb_id_stage();
         expected_ctrl[`CTRL_ALU_OP] = `ALU_ADD;
         
         check("Bypass Test (WB to RS1)",
-              5'b00010,    // rd_addr
-              5'b00001,    // rs1_addr
-              5'b00010,    // rs2_addr
+              5'b00010,    // rd_addr (x2)
+              5'b00010,    // rs1_addr (x2)
+              5'b00001,    // rs2_addr (x1)
               32'h0000001E, // rs1_data (bypassed value)
-              32'h00000014, // rs2_data
+              32'h00000014, // rs2_data (x1)
               32'h00000000, // immediate (unused)
               expected_ctrl, // control signals
               1'b1        // valid
         );
 
-        // Test 4: Stall test
+        // Test 4: Stall test - updating expected values
         $display("\n%sTest 4: Pipeline Stall%s", COLOR_YELLOW, COLOR_RESET);
         stall = 1'b1;
         if_id_instruction = 32'h00410113; // ADDI x2, x2, 4
@@ -217,8 +217,8 @@ module tb_id_stage();
         // Should maintain previous values during stall
         check("Pipeline Stall",
               5'b00010,    // rd_addr (previous)
-              5'b00001,    // rs1_addr (previous)
-              5'b00010,    // rs2_addr (previous)
+              5'b00010,    // rs1_addr (previous)
+              5'b00001,    // rs2_addr (previous)
               32'h0000001E, // rs1_data (previous)
               32'h00000014, // rs2_data (previous)
               32'h00000000, // immediate (previous)
