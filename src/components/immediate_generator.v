@@ -17,10 +17,14 @@ module immediate_generator (
                 imm_out = {{20{instr[31]}}, instr[31:25], instr[11:7]};  // Sign-extended 12-bit
             
             // B-type (BEQ, BNE, etc.)
-            7'b1100011:
+            //7'b1100011:
                 // B-type: imm[12:1] = {instr[31], instr[7], instr[30:25], instr[11:8]}
                 // The immediate is {imm[12], imm[10:5], imm[4:1], imm[11], 1'b0}
-                imm_out = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+            //imm_out = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+
+            7'b1100011:// B-type (branch)
+                imm_out = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
+            
             
             // U-type (LUI, AUIPC)
             7'b0110111, 7'b0010111:
