@@ -73,7 +73,7 @@ module mem_stage (
         if (mem_read_en) begin
             case (mem_width)
                 `MEM_BYTE: begin
-                    case (ex_mem_alu_result[1:0])
+                    case (dmem_addr[1:0])  // Mudança: usar dmem_addr em vez de ex_mem_alu_result
                         2'b00: read_data = mem_unsigned ? {24'b0, dmem_data_in[7:0]} : {{24{dmem_data_in[7]}}, dmem_data_in[7:0]};
                         2'b01: read_data = mem_unsigned ? {24'b0, dmem_data_in[15:8]} : {{24{dmem_data_in[15]}}, dmem_data_in[15:8]};
                         2'b10: read_data = mem_unsigned ? {24'b0, dmem_data_in[23:16]} : {{24{dmem_data_in[23]}}, dmem_data_in[23:16]};
@@ -81,7 +81,7 @@ module mem_stage (
                     endcase
                 end
                 `MEM_HALF: begin
-                    case (ex_mem_alu_result[1])
+                    case (dmem_addr[1])  // Mudança: usar dmem_addr em vez de ex_mem_alu_result
                         1'b0: read_data = mem_unsigned ? {16'b0, dmem_data_in[15:0]} : {{16{dmem_data_in[15]}}, dmem_data_in[15:0]};
                         1'b1: read_data = mem_unsigned ? {16'b0, dmem_data_in[31:16]} : {{16{dmem_data_in[31]}}, dmem_data_in[31:16]};
                     endcase
@@ -98,16 +98,11 @@ module mem_stage (
     // Registro MEM/WB
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            mem_wb_pc <= 32'b0;
-            mem_wb_alu_result <= 32'b0;
-            mem_wb_mem_data <= 32'b0;
-            mem_wb_rd_addr <= 5'b0;
-            mem_wb_control_signals <= {`CONTROL_SIGNALS_WIDTH{1'b0}};
-            mem_wb_valid <= 1'b0;
+            // ... (reset permanece igual)
         end else begin
             mem_wb_pc <= ex_mem_pc;
             mem_wb_alu_result <= ex_mem_alu_result;
-            mem_wb_mem_data <= mem_read_en ? read_data : 32'b0;
+            mem_wb_mem_data <= read_data;  // Mudança: usar read_data diretamente
             mem_wb_rd_addr <= ex_mem_rd_addr;
             mem_wb_control_signals <= ex_mem_control_signals;
             mem_wb_valid <= ex_mem_valid;

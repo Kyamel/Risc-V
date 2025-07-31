@@ -1,19 +1,26 @@
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// Configurações de diretórios
+// Emular __dirname com ESModules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Diretórios
 const SRC_DIR = "src";
 const TB_DIR = "tb";
 const BUILD_DIR = "build";
 const BIN_DIR = path.join(BUILD_DIR, "bin");
 const LOG_DIR = path.join(BUILD_DIR, "log");
 
-// Caminho para o arquivo de configuração (relativo ao script)
+// Caminho para o arquivo de configuração
 const CONFIG_PATH = path.join(__dirname, 'test_config.json');
 
-// Carrega a configuração dos módulos do JSON
+// Carrega configuração dos módulos
 const MODULES = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+
 
 /**
  * Compila e executa simulação usando Icarus Verilog

@@ -182,11 +182,11 @@ module rv32e_cpu (
     );
     
     // WB Stage
-    wb_stage write_back (
+    wb_stage wb_stage_inst (
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
         .mem_wb_control_signals(mem_wb_control_signals),
-        .wb_data(wb_data)
+        .wb_data(wb_data),
     );
     
     // Control Unit

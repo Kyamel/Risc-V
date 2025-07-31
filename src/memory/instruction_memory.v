@@ -23,9 +23,15 @@ module instruction_memory (
     // Inicialização da memória com NOPs (addi x0, x0, 0)
     integer i;
     initial begin
+        // Primeiro inicializa tudo com NOPs
         for (i = 0; i < 1024; i = i + 1) begin
             mem[i] = 32'h00000013; // NOP
         end
+        
+        // Depois carrega o programa (se em simulação)
+`ifdef SIMULATION
+        $readmemh("compiler/program.hex", mem);
+`endif
     end
 
     // Leitura normal (pelo estágio IF)
@@ -46,13 +52,5 @@ module instruction_memory (
             mem[debug_addr[31:2]] <= debug_data_in;
         end
     end
-
-    // Carregamento inicial de programa a partir de arquivo (para simulação)
-    // Esta parte é usada apenas durante a simulação
-`ifdef SIMULATION
-    initial begin
-        $readmemh("compiler/program.hex", mem);
-    end
-`endif
 
 endmodule

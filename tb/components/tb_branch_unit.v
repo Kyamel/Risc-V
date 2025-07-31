@@ -52,10 +52,10 @@ module tb_branch;
 
             total = total + 1;
             if (pc_src === expected) begin
-                $display("\033[1;32m[PASS]\033[0m %s (PC: 0x%h, New PC: 0x%h)", desc, pc, new_pc);
+                $display("\033[32m[PASS]\033[0m %s (PC: 0x%h, New PC: 0x%h)", desc, pc, new_pc);
                 passed = passed + 1;
             end else begin
-                $display("\033[1;31m[FAIL]\033[0m %s (got %b, expected %b, PC: 0x%h)", desc, pc_src, expected, pc);
+                $display("\033[31m[FAIL]\033[0m %s (got %b, expected %b, PC: 0x%h)", desc, pc_src, expected, pc);
             end
         end
     endtask
@@ -75,10 +75,10 @@ module tb_branch;
 
             total = total + 1;
             if (pc_src === 1'b1 && new_pc === (pc + imm)) begin
-                $display("\033[1;32m[PASS]\033[0m %s (PC: 0x%h, New PC: 0x%h)", desc, pc, new_pc);
+                $display("\033[32m[PASS]\033[0m %s (PC: 0x%h, New PC: 0x%h)", desc, pc, new_pc);
                 passed = passed + 1;
             end else begin
-                $display("\033[1;31m[FAIL]\033[0m %s (PC: 0x%h)", desc, pc);
+                $display("\033[31m[FAIL]\033[0m %s (PC: 0x%h)", desc, pc);
             end
         end
     endtask
@@ -118,9 +118,9 @@ module tb_branch;
         $display("");
         $display("=== Resultados ===");
         if (passed == total) begin
-            $display("\033[1;32m[PASS]: Todos os %0d testes passaram!\033[0m", total);
+            $display("\033[32m[PASS]: Todos os %0d testes passaram!\033[0m", total);
         end else begin
-            $display("\033[1;31m[FAILED]: %0d de %0d testes passaram.\033[0m", passed, total);
+            $display("\033[31m[FAILED]: %0d de %0d testes passaram.\033[0m", passed, total);
         end
 
         $display("");

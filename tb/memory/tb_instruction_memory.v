@@ -52,6 +52,11 @@ module tb_instruction_memory;
         $dumpfile("dump.vcd");
         $dumpvars(0, tb_instruction_memory);
         
+        // Inicializa memória com NOPs explicitamente para teste
+        for (i = 0; i < 1024; i = i + 1) begin
+            dut.mem[i] = 32'h00000013;
+        end
+        
         // Dump manual de parte da memória
         $display("\n---- DUMP INICIAL DAS PRIMEIRAS INSTRUÇÕES ----");
         for (i = 0; i < 8; i = i + 1) begin

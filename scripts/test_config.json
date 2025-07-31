@@ -5,13 +5,12 @@
         ],
         "tb": "tb/components/tb_alu.v"
     },
-    "ex_stage": {
+    "if_stage": {
         "sources": [
-            "src/stages/ex_stage.v",
-            "src/components/alu.v",
-            "src/components/immediate_generator.v"
+            "src/components/pc_generator.v",
+            "src/stages/if_stage.v"
         ],
-        "tb": "tb/stages/tb_ex_stage.v"
+        "tb": "tb/stages/tb_if_stage.v"
     },
     "id_stage": {
         "sources": [
@@ -21,6 +20,14 @@
             "src/core/constants.v"
         ],
         "tb": "tb/stages/tb_id_stage.v"
+    },
+    "ex_stage": {
+        "sources": [
+            "src/stages/ex_stage.v",
+            "src/components/alu.v",
+            "src/components/immediate_generator.v"
+        ],
+        "tb": "tb/stages/tb_ex_stage.v"
     },
     "mem_stage": {
         "sources": [
