@@ -111,6 +111,19 @@
         ],
         "tb": "tb/control/tb_stall_controller.v"
     },
+     "pipeline_if_id_ex": {
+        "sources": [
+            "src/components/pc_generator.v",
+            "src/components/alu.v",
+            "src/components/immediate_generator.v",
+            "src/control/control_unit.v",
+            "src/core/constants.v",
+            "src/stages/if_stage.v",
+            "src/stages/id_stage.v",
+            "src/stages/ex_stage.v"   
+        ],
+        "tb": "tb/stages/tb_pipeline_stages.v"
+    },
     "rv32e_cpu": {
         "sources": [
             "src/core/rv32e_cpu.v",
