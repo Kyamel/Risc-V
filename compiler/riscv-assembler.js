@@ -32,6 +32,10 @@ const output = [];
 for (const asm of assemblyLines) {
   let instruction = asm.trim();
 
+  // Remove comentários iniciados por ";"
+  instruction = instruction.split(';')[0].trim();
+
+
   // Tradução de pseudoinstrução "nop"
   if (instruction.toLowerCase() === 'nop') {
     instruction = 'addi x0, x0, 0';
