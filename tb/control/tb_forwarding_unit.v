@@ -1,118 +1,139 @@
 `timescale 1ns / 1ps
+`include "constants.v"
 
 module tb_forwarding_unit;
 
-    // --- Sinais de entrada para a unidade em teste (UUT) ---
-    reg [4:0] id_ex_rs1;
-    reg [4:0] id_ex_rs2;
-    reg [4:0] ex_mem_rd;
-    reg       ex_mem_regwrite;
-    reg [4:0] mem_wb_rd;
-    reg       mem_wb_regwrite;
+    // --- Inputs to UUT ---
+    reg [4:0] id_ex_rs1_addr;
+    reg [4:0] id_ex_rs2_addr;
+    reg [4:0] ex_mem_rd_addr;
+    reg       ex_mem_reg_write;
+    reg [4:0] mem_wb_rd_addr;
+    reg       mem_wb_reg_write;
 
-    // --- Sinais de saída da unidade em teste (UUT) ---
+    // --- Outputs from UUT ---
     wire [1:0] forward_a;
     wire [1:0] forward_b;
 
-    // --- Variáveis de verificação ---
+    // --- Verification variables ---
     integer pass_count;
     integer fail_count;
 
-    // Instanciação da Unidade Sob Teste (Unit Under Test - UUT)
+    // Forwarding codes
+    localparam NO_FWD = 2'b00;
+    localparam FWD_EX = 2'b01;
+    localparam FWD_MEM = 2'b10;
+
+    // Instantiate UUT with corrected port names
     forwarding_unit uut (
-        .id_ex_rs1(id_ex_rs1),
-        .id_ex_rs2(id_ex_rs2),
-        .ex_mem_rd(ex_mem_rd),
-        .ex_mem_regwrite(ex_mem_regwrite),
-        .mem_wb_rd(mem_wb_rd),
-        .mem_wb_regwrite(mem_wb_regwrite),
+        .id_ex_rs1_addr(id_ex_rs1_addr),
+        .id_ex_rs2_addr(id_ex_rs2_addr),
+        .ex_mem_rd_addr(ex_mem_rd_addr),
+        .ex_mem_reg_write(ex_mem_reg_write),
+        .mem_wb_rd_addr(mem_wb_rd_addr),
+        .mem_wb_reg_write(mem_wb_reg_write),
         .forward_a(forward_a),
         .forward_b(forward_b)
     );
 
-    // Tarefa para verificar os resultados e imprimir o status
+    // Verification task
     task check_result;
-        input [1:0] expected_A;
-        input [1:0] expected_B;
-        input [8*40-1:0] case_name; // CORREÇÃO: Usando um vetor de reg em vez de 'string'
+        input [1:0] expected_forward_a;
+        input [1:0] expected_forward_b;
+        input [8*40-1:0] test_case;
     begin
-        #10; // Espera um pouco para os sinais se propagarem
-        if (forward_a === expected_A && forward_b === expected_B) begin
-            $display("\033[32m[PASS]\033[0m %s -> forward_a = %b, forward_b = %b", case_name, forward_a, forward_b);
-            pass_count = pass_count + 1;
+        #10; // Wait for stabilization
+        if (forward_a === expected_forward_a && forward_b === expected_forward_b) begin
+            $display("\033[32m[PASS]\033[0m %s -> FwdA=%b, FwdB=%b", test_case, forward_a, forward_b);
+            pass_count++;
         end else begin
-            $display("\033[31m[FAIL]\033[0m %s -> Recebido: a=%b, b=%b | Esperado: a=%b, b=%b", case_name, forward_a, forward_b, expected_A, expected_B);
-            fail_count = fail_count + 1;
+            $display("\033[31m[FAIL]\033[0m %s -> Received: %b,%b | Expected: %b,%b", 
+                    test_case, forward_a, forward_b, expected_forward_a, expected_forward_b);
+            fail_count++;
         end
     end
     endtask
 
-    // Bloco principal de simulação
+    // Main simulation block
     initial begin
-        $display("Iniciando simulação da Forwarding Unit com verificação automática...");
-        $display("--------------------------------------------------------------------");
+        $display("Starting Forwarding Unit Test...");
+        $display("-----------------------------------");
         pass_count = 0;
         fail_count = 0;
 
-        // --- Caso 1: Sem Hazard ---
-        id_ex_rs1 = 5'd1; id_ex_rs2 = 5'd2;
-        ex_mem_rd = 5'd4; ex_mem_regwrite = 1'b1;
-        mem_wb_rd = 5'd5; mem_wb_regwrite = 1'b1;
-        check_result(2'b00, 2'b00, "Caso 1: Sem Hazard");
+        // --- Case 1: No hazards ---
+        id_ex_rs1_addr = 5'd1; id_ex_rs2_addr = 5'd2;
+        ex_mem_rd_addr = 5'd3; ex_mem_reg_write = 1'b1;
+        mem_wb_rd_addr = 5'd4; mem_wb_reg_write = 1'b1;
+        check_result(NO_FWD, NO_FWD, "No hazards");
 
-        // --- Caso 2: Hazard EX -> EX em rs1 ---
-        id_ex_rs1 = 5'd2; id_ex_rs2 = 5'd1;
-        ex_mem_rd = 5'd2; ex_mem_regwrite = 1'b1;
-        mem_wb_rd = 5'd5; mem_wb_regwrite = 1'b1;
-        check_result(2'b01, 2'b00, "Caso 2: Hazard EX em rs1");
+        // --- Case 2: EX hazard on operand 1 ---
+        id_ex_rs1_addr = 5'd3; id_ex_rs2_addr = 5'd1;
+        ex_mem_rd_addr = 5'd3; ex_mem_reg_write = 1'b1;
+        mem_wb_rd_addr = 5'd5; mem_wb_reg_write = 1'b1;
+        check_result(FWD_EX, NO_FWD, "EX hazard on op1");
 
-        // --- Caso 3: Hazard EX -> EX em rs2 ---
-        id_ex_rs1 = 5'd1; id_ex_rs2 = 5'd2;
-        ex_mem_rd = 5'd2; ex_mem_regwrite = 1'b1;
-        mem_wb_rd = 5'd5; mem_wb_regwrite = 1'b1;
-        check_result(2'b00, 2'b01, "Caso 3: Hazard EX em rs2");
+        // --- Case 3: EX hazard on operand 2 ---
+        id_ex_rs1_addr = 5'd1; id_ex_rs2_addr = 5'd3;
+        ex_mem_rd_addr = 5'd3; ex_mem_reg_write = 1'b1;
+        mem_wb_rd_addr = 5'd5; mem_wb_reg_write = 1'b1;
+        check_result(NO_FWD, FWD_EX, "EX hazard on op2");
 
-        // --- Caso 4: Hazard MEM -> EX em rs1 ---
-        id_ex_rs1 = 5'd2; id_ex_rs2 = 5'd1;
-        ex_mem_rd = 5'd4; ex_mem_regwrite = 1'b0; // Simula um nop ou instrução sem escrita
-        mem_wb_rd = 5'd2; mem_wb_regwrite = 1'b1;
-        check_result(2'b10, 2'b00, "Caso 4: Hazard MEM em rs1");
+        // --- Case 4: MEM hazard on operand 1 ---
+        id_ex_rs1_addr = 5'd4; id_ex_rs2_addr = 5'd1;
+        ex_mem_rd_addr = 5'd2; ex_mem_reg_write = 1'b0;
+        mem_wb_rd_addr = 5'd4; mem_wb_reg_write = 1'b1;
+        check_result(FWD_MEM, NO_FWD, "MEM hazard on op1");
+
+        // --- Case 5: MEM hazard on operand 2 ---
+        id_ex_rs1_addr = 5'd1; id_ex_rs2_addr = 5'd4;
+        ex_mem_rd_addr = 5'd2; ex_mem_reg_write = 1'b0;
+        mem_wb_rd_addr = 5'd4; mem_wb_reg_write = 1'b1;
+        check_result(NO_FWD, FWD_MEM, "MEM hazard on op2");
+
+        // --- Case 6: EX priority over MEM ---
+        id_ex_rs1_addr = 5'd3; id_ex_rs2_addr = 5'd1;
+        ex_mem_rd_addr = 5'd3; ex_mem_reg_write = 1'b1;
+        mem_wb_rd_addr = 5'd3; mem_wb_reg_write = 1'b1;
+        check_result(FWD_EX, NO_FWD, "EX priority over MEM");
+
+        // --- Case 7: Zero register (x0) ---
+        id_ex_rs1_addr = 5'd0; id_ex_rs2_addr = 5'd0;
+        ex_mem_rd_addr = 5'd0; ex_mem_reg_write = 1'b1;
+        mem_wb_rd_addr = 5'd0; mem_wb_reg_write = 1'b1;
+        check_result(NO_FWD, NO_FWD, "Zero register (x0)");
+
+        // --- Case 8: Write enable disabled ---
+        id_ex_rs1_addr = 5'd2; id_ex_rs2_addr = 5'd3;
+        ex_mem_rd_addr = 5'd2; ex_mem_reg_write = 1'b0;
+        mem_wb_rd_addr = 5'd3; mem_wb_reg_write = 1'b0;
+        check_result(NO_FWD, NO_FWD, "Write enable disabled");
+
+        // --- Case 9: Hazard on both operands ---
+        id_ex_rs1_addr = 5'd3; id_ex_rs2_addr = 5'd4;
+        ex_mem_rd_addr = 5'd3; ex_mem_reg_write = 1'b1;
+        mem_wb_rd_addr = 5'd4; mem_wb_reg_write = 1'b1;
+        check_result(FWD_EX, FWD_MEM, "Hazard on both operands");
+
+        // --- Case 10: Both stages have matching destination for same operand ---
+        id_ex_rs1_addr = 5'd5; id_ex_rs2_addr = 5'd1;
+        ex_mem_rd_addr = 5'd5; ex_mem_reg_write = 1'b1;
+        mem_wb_rd_addr = 5'd5; mem_wb_reg_write = 1'b1;
+        check_result(FWD_EX, NO_FWD, "Both stages match for op1");
+
+        // Final results
+        $display("\n-----------------------------------");
+        $display("Test Results:");
+        $display("Tests Passed: \033[32m%d\033[0m", pass_count);
+        $display("Tests Failed: \033[31m%d\033[0m", fail_count);
+        $display("-----------------------------------");
         
-        // --- Caso 5: Hazard MEM -> EX em rs2 --- (NOVO TESTE)
-        id_ex_rs1 = 5'd1; id_ex_rs2 = 5'd2;
-        ex_mem_rd = 5'd4; ex_mem_regwrite = 1'b0; // Simula um nop ou instrução sem escrita
-        mem_wb_rd = 5'd2; mem_wb_regwrite = 1'b1;
-        check_result(2'b00, 2'b10, "Caso 5: Hazard MEM em rs2");
-
-        // --- Caso 6: Prioridade do Hazard EX sobre o MEM ---
-        id_ex_rs1 = 5'd2; id_ex_rs2 = 5'd1;
-        ex_mem_rd = 5'd2; ex_mem_regwrite = 1'b1;
-        mem_wb_rd = 5'd2; mem_wb_regwrite = 1'b1;
-        check_result(2'b01, 2'b00, "Caso 6: Prioridade EX sobre MEM");
-
-        // --- Caso 7: Hazard com registrador zero (x0) ---
-        id_ex_rs1 = 5'd0; id_ex_rs2 = 5'd0;
-        ex_mem_rd = 5'd0; ex_mem_regwrite = 1'b1;
-        mem_wb_rd = 5'd0; mem_wb_regwrite = 1'b1;
-        check_result(2'b00, 2'b00, "Caso 7: Hazard com registrador zero (x0)");
-
-        // --- Caso 8: Hazard com RegWrite desativado ---
-        id_ex_rs1 = 5'd2; id_ex_rs2 = 5'd3;
-        ex_mem_rd = 5'd2; ex_mem_regwrite = 1'b0;
-        mem_wb_rd = 5'd3; mem_wb_regwrite = 1'b0;
-        check_result(2'b00, 2'b00, "Caso 8: Hazard com RegWrite = 0");
-
-        // --- Sumário Final ---
-        $display("\n--------------------------------------------------------------------");
-        $display("Simulacao concluida.");
         if (fail_count == 0) begin
-            $display("\033[32mTodos os %0d testes passaram!\033[0m", pass_count);
+            $display("\033[32mAll tests passed successfully!\033[0m");
         end else begin
-            $display("\033[32mTestes Aprovados: %0d\033[0m", pass_count);
-            $display("\033[31mTestes Reprovados: %0d\033[0m", fail_count);
+            $display("\033[31mSome tests failed. Please check the results.\033[0m");
         end
-        $display("--------------------------------------------------------------------");
+        
         $finish;
     end
-
 endmodule

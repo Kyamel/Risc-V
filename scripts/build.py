@@ -99,6 +99,29 @@ MODULES = {
         ],
         "tb": TB_DIR / "control" / "tb_forwarding_unit.v",
     },
+    "rv32e_cpu": {
+        "sources": [
+            SRC_DIR / "core" / "rv32e_cpu.v",
+            SRC_DIR / "core" / "constants.v",
+
+            SRC_DIR / "stages" / "if_stage.v",
+            SRC_DIR / "stages" / "id_stage.v",
+            SRC_DIR / "stages" / "ex_stage.v",
+            SRC_DIR / "stages" / "mem_stage.v",
+            SRC_DIR / "stages" / "wb_stage.v",
+
+            SRC_DIR / "control" / "control_unit.v",
+            SRC_DIR / "control" / "hazard_detection.v",
+            SRC_DIR / "control" / "forwarding_unit.v",
+
+            SRC_DIR / "components" / "branch_unit.v",
+            SRC_DIR / "components" / "register_file.v",
+            SRC_DIR / "components" / "alu.v",
+            SRC_DIR / "components" / "immediate_generator.v",
+
+        ],
+        "tb": TB_DIR / "core" / "tb_rv32e_cpu.v",
+    },
 }
 
 def run_icarus(module_name, sources, tb_file):

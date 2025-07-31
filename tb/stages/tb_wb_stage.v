@@ -4,58 +4,64 @@
 module tb_wb_stage;
 
     // Entradas
-    reg [31:0] mem_alu_result;
-    reg [31:0] mem_mem_data;
-    reg [`CONTROL_SIGNALS_WIDTH-1:0] mem_control_signals;
+    reg [31:0] mem_wb_alu_result;
+    reg [31:0] mem_wb_mem_data;
+    reg [`CONTROL_SIGNALS_WIDTH-1:0] mem_wb_control_signals;
 
     // Saída
     wire [31:0] wb_data;
 
     // DUT
     wb_stage dut (
-        .mem_alu_result(mem_alu_result),
-        .mem_mem_data(mem_mem_data),
-        .mem_control_signals(mem_control_signals),
+        .mem_wb_alu_result(mem_wb_alu_result),
+        .mem_wb_mem_data(mem_wb_mem_data),
+        .mem_wb_control_signals(mem_wb_control_signals),
         .wb_data(wb_data)
     );
 
     // Função de checagem
-    task check(string name, input [31:0] got, input [31:0] expected);
-        begin
-            if (got !== expected) begin
-                $display("\033[1;31m[FAIL]\033[0m %s: Esperado 0x%h, Obteve 0x%h", name, expected, got);
-            end else begin
-                $display("\033[1;32m[PASS]\033[0m %s: Valor 0x%h", name, got);
-            end
+    task check;
+        input string name;
+        input [31:0] got;
+        input [31:0] expected;
+    begin
+        if (got !== expected) begin
+            $display("\033[1;31m[FAIL]\033[0m %s: Esperado 0x%h, Obteve 0x%h", name, expected, got);
+        end else begin
+            $display("\033[1;32m[PASS]\033[0m %s: Valor 0x%h", name, got);
         end
+    end
     endtask
 
     initial begin
         $display("\n---- TESTE WB_STAGE ----\n");
 
         // -------------------
-        // Teste: MEM_TO_REG = 0 (usar resultado da ALU)
+        // Teste: CTRL_MEM_TO_REG = 0 (usar resultado da ALU)
         // -------------------
-        mem_alu_result = 32'hDEAD_BEEF;
-        mem_mem_data = 32'hCAFE_BABE;
-        mem_control_signals = 0;
-        mem_control_signals[`MEM_TO_REG] = 0;
+        mem_wb_alu_result = 32'hDEADBEEF;
+        mem_wb_mem_data = 32'hCAFEBABE;
+        mem_wb_control_signals = 0;
+        mem_wb_control_signals[`CTRL_MEM_TO_REG] = 0;
         #1;
-        check("ALU result (MEM_TO_REG = 0)", wb_data, 32'hDEADBEEF);
+        check("ALU result (CTRL_MEM_TO_REG = 0)", wb_data, 32'hDEADBEEF);
 
         // -------------------
-        // Teste: MEM_TO_REG = 1 (usar dado da memória)
+        // Teste: CTRL_MEM_TO_REG = 1 (usar dado da memória)
         // -------------------
-        mem_control_signals[`MEM_TO_REG] = 1;
+        mem_wb_control_signals[`CTRL_MEM_TO_REG] = 1;
         #1;
-        check("Mem result (MEM_TO_REG = 1)", wb_data, 32'hCAFEBABE);
+        check("Mem result (CTRL_MEM_TO_REG = 1)", wb_data, 32'hCAFEBABE);
 
         // -------------------
-        // Teste: MEM_TO_REG default (inválido = X) - esperado 0
+        // Teste: Registrador não deve escrever quando reg_write = 0
         // -------------------
-        mem_control_signals[`MEM_TO_REG] = 1'bx;
+        mem_wb_control_signals[`CTRL_REG_WRITE] = 0;
+        mem_wb_alu_result = 32'h12345678;
+        mem_wb_mem_data = 32'h87654321;
         #1;
-        check("MEM_TO_REG inválido", wb_data, 32'h00000000);
+        // O valor deve permanecer o mesmo pois reg_write está desativado
+        check("Reg write disabled", wb_data, 32'hCAFEBABE);
 
         $display("\n---- FIM DOS TESTES ----\n");
         $finish;

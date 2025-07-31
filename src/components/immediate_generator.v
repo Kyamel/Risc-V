@@ -1,4 +1,7 @@
 // src/components/immediate_generator.v
+
+`timescale 1ns / 1ps
+
 module immediate_generator (
     input  [31:0] instr,
     output reg [31:0] imm_out

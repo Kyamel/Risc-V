@@ -1,15 +1,16 @@
+`timescale 1ns / 1ps
 `include "constants.v"
 
 module rv32e_cpu (
     input wire clk,
     input wire reset,
     
-    // Interface com a memória de instruções
+    // Instruction memory interface
     output wire [31:0] imem_addr,
     input wire [31:0] imem_data,
     output wire imem_read,
     
-    // Interface com a memória de dados
+    // Data memory interface
     output wire [31:0] dmem_addr,
     input wire [31:0] dmem_data_in,
     output wire [31:0] dmem_data_out,
@@ -17,7 +18,7 @@ module rv32e_cpu (
     output wire dmem_write,
     output wire [3:0] dmem_byte_enable,
     
-    // Sinais de debug
+    // Debug signals
     output wire [31:0] debug_pc,
     output wire [31:0] debug_registers [0:15],
     output wire [31:0] debug_instruction,
@@ -25,13 +26,13 @@ module rv32e_cpu (
     output wire debug_flush
 );
 
-    // Sinais entre os estágios do pipeline
+    // Pipeline stage registers
     // IF/ID
     wire [31:0] if_id_pc;
     wire [31:0] if_id_instruction;
     wire if_id_valid;
     
-    // ID/EX
+    // ID/EX 
     wire [31:0] id_ex_pc;
     wire [31:0] id_ex_instruction;
     wire [31:0] id_ex_rs1_data;
@@ -59,23 +60,31 @@ module rv32e_cpu (
     wire [`CONTROL_SIGNALS_WIDTH-1:0] mem_wb_control_signals;
     wire mem_wb_valid;
     
-    // Sinais de controle
+    // Control signals
     wire stall;
     wire flush;
     wire [31:0] new_pc;
     wire pc_src;
     
-    // Sinais de forwarding
+    // Forwarding signals
     wire [1:0] forward_a;
     wire [1:0] forward_b;
     
-    // Conexões do banco de registradores
+    // Register file connections
     wire [31:0] rs1_data;
     wire [31:0] rs2_data;
     wire [4:0] rs1_addr;
     wire [4:0] rs2_addr;
     
-    // Instanciação dos estágios do pipeline
+    // Additional wire declarations
+    wire [31:0] wb_data;
+    wire [31:0] ex_mem_alu_result_fwd;
+    wire branch_taken;
+    wire [31:0] branch_target;
+    wire [31:0] instruction;
+    wire [`CONTROL_SIGNALS_WIDTH-1:0] control_signals;
+
+    // IF Stage
     if_stage instruction_fetch (
         .clk(clk),
         .reset(reset),
@@ -91,6 +100,7 @@ module rv32e_cpu (
         .if_id_valid(if_id_valid)
     );
     
+    // ID Stage
     id_stage instruction_decode (
         .clk(clk),
         .reset(reset),
@@ -101,7 +111,7 @@ module rv32e_cpu (
         .if_id_valid(if_id_valid),
         .mem_wb_rd_addr(mem_wb_rd_addr),
         .mem_wb_rd_data(wb_data),
-        .mem_wb_reg_write(mem_wb_control_signals[`REG_WRITE]),
+        .mem_wb_reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .id_ex_pc(id_ex_pc),
         .id_ex_instruction(id_ex_instruction),
         .id_ex_rs1_data(id_ex_rs1_data),
@@ -118,6 +128,7 @@ module rv32e_cpu (
         .rs2_data(rs2_data)
     );
     
+    // EX Stage
     ex_stage execute (
         .clk(clk),
         .reset(reset),
@@ -141,9 +152,12 @@ module rv32e_cpu (
         .forward_b(forward_b),
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
-        .ex_mem_alu_result_fwd(ex_mem_alu_result)
+        .ex_mem_alu_result_fwd(ex_mem_alu_result_fwd),
+        .branch_taken(branch_taken),
+        .branch_target(branch_target)
     );
     
+    // MEM Stage
     mem_stage memory_access (
         .clk(clk),
         .reset(reset),
@@ -167,6 +181,7 @@ module rv32e_cpu (
         .mem_wb_valid(mem_wb_valid)
     );
     
+    // WB Stage
     wb_stage write_back (
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
@@ -174,31 +189,35 @@ module rv32e_cpu (
         .wb_data(wb_data)
     );
     
-    // Instanciação dos componentes de controle
+    // Control Unit
+    assign instruction = if_id_instruction;  // Connect IF/ID instruction to control unit
     control_unit control_unit (
-        .instruction(if_id_instruction),
+        .instruction(instruction),
         .control_signals(control_signals)
     );
     
+    // Hazard Detection
     hazard_detection hazard_detection (
         .id_ex_rd_addr(id_ex_rd_addr),
-        .id_ex_mem_read(id_ex_control_signals[`MEM_READ]),
+        .id_ex_mem_read(id_ex_control_signals[`CTRL_MEM_READ]),
         .if_id_rs1_addr(rs1_addr),
         .if_id_rs2_addr(rs2_addr),
         .stall(stall)
     );
     
+    // Forwarding Unit
     forwarding_unit forwarding_unit (
         .id_ex_rs1_addr(id_ex_rs1_addr),
         .id_ex_rs2_addr(id_ex_rs2_addr),
         .ex_mem_rd_addr(ex_mem_rd_addr),
-        .ex_mem_reg_write(ex_mem_control_signals[`REG_WRITE]),
+        .ex_mem_reg_write(ex_mem_control_signals[`CTRL_REG_WRITE]),
         .mem_wb_rd_addr(mem_wb_rd_addr),
-        .mem_wb_reg_write(mem_wb_control_signals[`REG_WRITE]),
+        .mem_wb_reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .forward_a(forward_a),
         .forward_b(forward_b)
     );
     
+    // Branch Unit
     branch_unit branch_unit (
         .id_ex_pc(id_ex_pc),
         .id_ex_instruction(id_ex_instruction),
@@ -211,13 +230,13 @@ module rv32e_cpu (
         .flush(flush)
     );
     
-    // Conexões de debug
+    // Debug connections
     assign debug_pc = if_id_pc;
     assign debug_instruction = if_id_instruction;
     assign debug_stall = stall;
     assign debug_flush = flush;
     
-    // Banco de registradores (16 registradores para RV32E)
+    // Register File (16 registers for RV32E)
     register_file #(
         .WIDTH(32),
         .DEPTH(16)
@@ -228,7 +247,7 @@ module rv32e_cpu (
         .rs2_addr(rs2_addr),
         .rd_addr(mem_wb_rd_addr),
         .rd_data(wb_data),
-        .reg_write(mem_wb_control_signals[`REG_WRITE]),
+        .reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .rs1_data(rs1_data),
         .rs2_data(rs2_data),
         .debug_registers(debug_registers)

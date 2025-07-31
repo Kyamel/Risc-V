@@ -1,57 +1,58 @@
+`timescale 1ns / 1ps
+`include "constants.v"
+
 module forwarding_unit (
-
-    // Identificador do registrador vindo do estágio ID/EX
-    input wire [4:0] id_ex_rs1,
-    input wire [4:0] id_ex_rs2,
-
-    // Identificador do registrador de destino e sinal de escrita vindo do estágio EX/MEM
-    input wire [4:0] ex_mem_rd,
-    input wire ex_mem_regwrite,
+    // Interface com estágio ID/EX
+    input wire [4:0] id_ex_rs1_addr,  // Endereço do operando fonte 1
+    input wire [4:0] id_ex_rs2_addr,  // Endereço do operando fonte 2
     
-    // Identificador do registrador de destino e sinal de escrita vindo do estágio MEM/WB
-    input wire [4:0] mem_wb_rd,
-    input wire mem_wb_regwrite,
+    // Interface com estágio EX/MEM
+    input wire [4:0] ex_mem_rd_addr,  // Endereço de destino em EX/MEM
+    input wire ex_mem_reg_write,      // Sinal de escrita em EX/MEM
     
-    // Outputs de seleção
-    output reg [1:0] forward_a,
-    output reg [1:0] forward_b
+    // Interface com estágio MEM/WB
+    input wire [4:0] mem_wb_rd_addr,  // Endereço de destino em MEM/WB
+    input wire mem_wb_reg_write,      // Sinal de escrita em MEM/WB
+    
+    // Sinais de controle de forwarding
+    output reg [1:0] forward_a,       // Seleção para operando 1
+    output reg [1:0] forward_b        // Seleção para operando 2
 );
 
-/*    * Valores dos sinais de controle 'forward_a' e 'forward_b':
-    * 00: Sem adiantamento. A ULA usa o valor vindo do banco de registradores (estágio ID).
-    * 01: Adiantar do estágio EX/MEM. A ULA usa o resultado da instrução que está no estágio EX/MEM.
-    * 10: Adiantar do estágio MEM/WB. A ULA usa o resultado da instrução que está no estágio MEM/WB.
-*/
+    // Códigos de seleção para forwarding
+    localparam NO_FORWARD = 2'b00;
+    localparam FORWARD_FROM_EX = 2'b01;
+    localparam FORWARD_FROM_MEM = 2'b10;
 
-
-always @(*) begin
-
-    // ---- Lógica para o A (rs1) ----
-
-    if(ex_mem_regwrite && (ex_mem_rd != 5'b00000) && (ex_mem_rd == id_ex_rs1))begin
-        forward_a = 2'b01; // adianta o estágio ex/mem
+    always @(*) begin
+        // Valores padrão - sem forwarding
+        forward_a = NO_FORWARD;
+        forward_b = NO_FORWARD;
+        
+        // ========== Lógica de forwarding para operando 1 ==========
+        // Prioridade para forwarding do estágio EX/MEM (dado mais recente)
+        if (ex_mem_reg_write && 
+            (ex_mem_rd_addr != 5'b0) && 
+            (ex_mem_rd_addr == id_ex_rs1_addr)) begin
+            forward_a = FORWARD_FROM_EX;
+        end
+        // Forwarding do estágio MEM/WB se aplicável
+        else if (mem_wb_reg_write && 
+                (mem_wb_rd_addr != 5'b0) && 
+                (mem_wb_rd_addr == id_ex_rs1_addr)) begin
+            forward_a = FORWARD_FROM_MEM;
+        end
+        
+        // ========== Lógica de forwarding para operando 2 ==========
+        if (ex_mem_reg_write && 
+            (ex_mem_rd_addr != 5'b0) && 
+            (ex_mem_rd_addr == id_ex_rs2_addr)) begin
+            forward_b = FORWARD_FROM_EX;
+        end
+        else if (mem_wb_reg_write && 
+                (mem_wb_rd_addr != 5'b0) && 
+                (mem_wb_rd_addr == id_ex_rs2_addr)) begin
+            forward_b = FORWARD_FROM_MEM;
+        end
     end
-
-    else if (mem_wb_regwrite && (mem_wb_rd != 5'b00000) && (mem_wb_rd == id_ex_rs1))begin
-        forward_a = 2'b10; // adianta o estágio mem/wb
-    end
-    else begin
-        forward_a = 2'b00; // sem adiantamento
-    end
-
-    // ---- Lógica para o B (rs2) ----
-
-        if(ex_mem_regwrite && (ex_mem_rd != 5'b00000) && (ex_mem_rd == id_ex_rs2))begin
-        forward_b = 2'b01; // adianta o estágio ex/mem
-    end
-
-    else if (mem_wb_regwrite && (mem_wb_rd != 5'b00000) && (mem_wb_rd == id_ex_rs2))begin
-        forward_b = 2'b10; // adianta o estágio mem/wb
-    end
-    else begin
-        forward_b = 2'b00; // sem adiantamento
-    end
-    
-end
-
 endmodule
