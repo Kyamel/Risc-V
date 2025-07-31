@@ -144,6 +144,14 @@
         ],
         "tb": "tb/pipeline/tb_processor_load_program.v"
     },
+    "processor_load_and_fetch": {
+        "sources": [
+            "src/memory/instruction_memory.v",
+            "src/components/register_file.v",
+            "src/stages/if_stage.v"
+        ],
+        "tb": "tb/pipeline/tb_processor_load_and_fetch.v"
+    },
     "pipeline_mem_stage":{
         "sources":[
             "src/stages/mem_stage.v",
