@@ -55,5 +55,6 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "bitset": "cpp"
-    }
+    },
+    "nixEnvPicker.envFile": "${workspaceFolder}${/}shell.nix"
 }
