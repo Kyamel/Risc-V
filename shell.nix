@@ -9,6 +9,8 @@ pkgs.mkShell {
     #pkgs.pkgsCross.riscv32-embedded.buildPackages.gcc
     #pkgs.nlohmann_json
     #pkgs.nodejs-slim_24
+    pkgs.qt6.qtbase
+    pkgs.qt6.qttools  # inclui qtdiag, designer, linguist
   ];
 
   shellHook = ''
