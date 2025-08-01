@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module instruction_memory (
     input wire clk,
     input wire reset,
@@ -12,11 +14,23 @@ module instruction_memory (
     input wire [31:0] debug_addr,     // Endereço para acesso via debug
     input wire [31:0] debug_data_in,  // Dado a ser escrito via debug
     input wire        debug_write_en, // Habilita a escrita via debug
-    output wire [31:0] debug_data_out  // Dado lido via debug
+    output wire [31:0] debug_data_out,  // Dado lido via debug
+
+    output wire [31:0] debug_mem_out [0:1023] // Memória de debug para acesso externo
 );
 
     // Instrução NOP (addi x0, x0, 0) definida localmente para evitar dependências.
     localparam NOP = 32'h00000013;
+
+    // Expondo o conteúdo da memória para debug externo
+
+    genvar idx;
+    generate
+        for (idx = 0; idx < 1023; idx = idx + 1) begin : gen_debug_mem
+            assign debug_mem_out[idx] = mem[idx];
+        end
+    endgenerate
+
 
     // Memória de 4KB, organizada como 1024 palavras de 32 bits.
     // O tipo `reg` é usado para que possa ser escrita em blocos `initial` e `always`.
