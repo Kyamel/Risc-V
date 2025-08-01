@@ -1,11 +1,17 @@
 build/
 src/backup
 testbench_backup
+
 encoder/
+
 obj_dir/
+verilator_obj_dir
+
+qtbuild/
 
 *.vcd
 *.bin
 *.hex
+*.stash
 
 processor_state.json
