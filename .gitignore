@@ -2,7 +2,10 @@ build/
 src/backup
 testbench_backup
 encoder/
+obj_dir/
 
 *.vcd
 *.bin
 *.hex
+
+processor_state.json
