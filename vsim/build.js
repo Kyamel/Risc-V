@@ -4,7 +4,7 @@ import { existsSync } from "fs";
 
 // Configurações
 const SRC_DIR = "src";
-const TB_FILE = "sim/main.cpp sim/cli/simulator.cpp sim/cli/tui.cpp sim/core/memdumper.cpp sim/core/dumpload.cpp";
+const TB_FILE = "vsim/main.cpp vsim/cli/simulator.cpp vsim/cli/tui.cpp vsim/core/memdumper.cpp vsim/core/dumpload.cpp";
 const OUTPUT_DIR = "verilator_obj_dir";
 const VCD_FILE = "waveform.vcd";
 const PROGRAM_HEX = "programs/exemplo.hex";
