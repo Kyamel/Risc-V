@@ -4,7 +4,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TEMPLATE = app
 TARGET = simulador
 
-SOURCES += sim/vsim-gui.cpp
+SOURCES += vsim-gui.cpp
 
 # Diretórios de build customizados
 DESTDIR = qtbuild/bin        # Binário final

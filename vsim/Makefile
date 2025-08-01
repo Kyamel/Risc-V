@@ -37,7 +37,7 @@ MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
 DISTNAME      = simulador1.0.0
-DISTDIR = /home/lucas/dev/fpga/rv32e/qtbuild/out/simulador1.0.0
+DISTDIR = /home/lucas/dev/fpga/rv32e/vsim/qtbuild/out/simulador1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-O1 -Wl,-rpath,/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/lib -Wl,-rpath-link,/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/lib
 LIBS          = $(SUBLIBS) /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/lib/libQt6Widgets.so -lQt6Gui /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/lib/libQt6Gui.so -lQt6Core /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/lib/libQt6Core.so -lpthread -lGLX -lOpenGL   
@@ -52,7 +52,7 @@ OBJECTS_DIR   = qtbuild/out/
 
 ####### Files
 
-SOURCES       = sim/vsim-gui.cpp 
+SOURCES       = vsim-gui.cpp 
 OBJECTS       = qtbuild/out/vsim-gui.o
 DIST          = /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/spec_pre.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/common/unix.conf \
@@ -216,7 +216,6 @@ DIST          = /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/qt_config.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/linux-g++/qmake.conf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/spec_post.prf \
-		.qmake.stash \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/exclusive_builds.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/toolchain.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/default_pre.prf \
@@ -237,7 +236,7 @@ DIST          = /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/exceptions.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/yacc.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/lex.prf \
-		vsim.pro  sim/vsim-gui.cpp
+		vsim.pro  vsim-gui.cpp
 QMAKE_TARGET  = simulador
 DESTDIR       = qtbuild/bin/
 TARGET        = qtbuild/bin/simulador
@@ -412,7 +411,6 @@ Makefile: vsim.pro /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mksp
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/qt_config.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/linux-g++/qmake.conf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/spec_post.prf \
-		.qmake.stash \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/exclusive_builds.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/toolchain.prf \
 		/nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/default_pre.prf \
@@ -600,7 +598,6 @@ Makefile: vsim.pro /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mksp
 /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/qt_config.prf:
 /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/linux-g++/qmake.conf:
 /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/spec_post.prf:
-.qmake.stash:
 /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/exclusive_builds.prf:
 /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/toolchain.prf:
 /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/default_pre.prf:
@@ -640,7 +637,7 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /nix/store/pcm23dq8n6vj89kxzykw4gq9wbh5w7b4-qtbase-6.9.1/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents sim/vsim-gui.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents vsim-gui.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -690,8 +687,8 @@ compiler_clean: compiler_moc_predefs_clean
 
 ####### Compile
 
-qtbuild/out/vsim-gui.o: sim/vsim-gui.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qtbuild/out/vsim-gui.o sim/vsim-gui.cpp
+qtbuild/out/vsim-gui.o: vsim-gui.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qtbuild/out/vsim-gui.o vsim-gui.cpp
 
 ####### Install
 
