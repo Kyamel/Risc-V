@@ -28,7 +28,7 @@ module register_file #(
 
     // Conexão de debug
     assign debug_registers[0] = '0;  // x0 sempre zero
-    generate
+    generate // 'gen_registers'
         for (genvar i = 1; i < DEPTH; i++) begin
             assign debug_registers[i] = regs[i];
         end
