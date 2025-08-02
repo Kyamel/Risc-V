@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module tb_instruction_memory;
 
     // --- Sinais de Conexão com o DUT ---
@@ -8,10 +10,7 @@ module tb_instruction_memory;
     reg read_en;
 
     // --- Sinais da Interface de Debug ---
-    reg debug_en;
     reg [31:0] debug_addr;
-    reg [31:0] debug_data_in;
-    reg debug_write_en;
     wire [31:0] debug_data_out;
 
     // Variável de iteração
@@ -22,16 +21,16 @@ module tb_instruction_memory;
     always #5 clk = ~clk;
 
     // --- Instanciação do Módulo sob Teste (DUT) ---
-    instruction_memory dut (
+    instruction_memory #(
+        .DEPTH(1024),
+        .INIT_FILE("compiler/program.hex")
+    ) dut (
         .clk(clk),
         .reset(reset),
         .addr(addr),
         .data_out(data_out),
         .read_en(read_en),
-        .debug_en(debug_en),
         .debug_addr(debug_addr),
-        .debug_data_in(debug_data_in),
-        .debug_write_en(debug_write_en),
         .debug_data_out(debug_data_out)
     );
 
@@ -68,11 +67,8 @@ module tb_instruction_memory;
         // --- Estado Inicial dos Sinais ---
         reset = 1; // Inicia com o processador em reset
         read_en = 1; // Habilita a leitura para observar a saída
-        debug_en = 0;
-        debug_write_en = 0;
         addr = 32'h0;
         debug_addr = 32'h0;
-        debug_data_in = 32'h0;
 
         // Aguarda um ciclo de clock completo com o reset ativo
         #10;
@@ -95,43 +91,48 @@ module tb_instruction_memory;
         // -----------------------------------------------------------------
         check("Leitura normal de addr 0 pós-reset", data_out, dut.mem[0]);
 
+        // -----------------------------------------------------------------
+        // 2. Verifica leitura via porta normal em diferentes endereços
+        // -----------------------------------------------------------------
+        addr = 32'h00000004; // Endereço 0x04 (palavra 1)
+        #10;
+        check("Leitura de addr 4", data_out, dut.mem[1]);
+        
+        addr = 32'h00000008; // Endereço 0x08 (palavra 2)
+        #10;
+        check("Leitura de addr 8", data_out, dut.mem[2]);
 
         // -----------------------------------------------------------------
-        // 2. Escreve via interface de debug
+        // 3. Verifica leitura via debug_data_out (leitura combinacional)
         // -----------------------------------------------------------------
-        debug_en = 1;
-        debug_write_en = 1;
-        debug_addr = 32'h00000020; // Endereço 0x20 (palavra 8)
-        debug_data_in = 32'hCAFEBABE;
-        #10; // Aguarda um ciclo para a escrita síncrona ocorrer
-
-        // -----------------------------------------------------------------
-        // 3. Lê instrução via porta normal no endereço modificado
-        // -----------------------------------------------------------------
-        addr = 32'h00000020;
-        debug_write_en = 0; // Desliga a escrita para o próximo teste
-        #10; // Aguarda um ciclo para a leitura ocorrer
-        check("Leitura normal após escrita debug", data_out, 32'hCAFEBABE);
-
-        // -----------------------------------------------------------------
-        // 4. Lê via debug_data_out (leitura combinacional)
-        // -----------------------------------------------------------------
+        debug_addr = 32'h0000000C; // Endereço 0x0C (palavra 3)
         // Não precisa esperar, a leitura via debug é imediata (assign)
-        check("Leitura via debug_data_out", debug_data_out, 32'hCAFEBABE);
+        check("Leitura via debug_data_out addr C", debug_data_out, dut.mem[3]);
+        
+        debug_addr = 32'h00000010; // Endereço 0x10 (palavra 4)
+        check("Leitura via debug_data_out addr 10", debug_data_out, dut.mem[4]);
 
         // -----------------------------------------------------------------
-        // 5. Escrita sem debug_en = deve ser ignorada
+        // 4. Verifica comportamento quando read_en = 0
         // -----------------------------------------------------------------
-        debug_en = 0; // Desabilita a interface de debug
-        debug_write_en = 1;
-        debug_addr = 32'h00000030; // Endereço 0x30 (palavra 12)
-        debug_data_in = 32'hDEADBEEF;
-        #10; // Aguarda um ciclo
+        read_en = 0;
+        addr = 32'h00000014; // Endereço 0x14 (palavra 5)
+        #10;
+        check("Saída NOP quando read_en=0", data_out, 32'h00000013);
+        
+        read_en = 1; // Reabilita leitura
+        #10;
+        check("Leitura reabilitada", data_out, dut.mem[5]);
 
-        addr = 32'h00000030;
-        #10; // Aguarda um ciclo para a leitura
-        // O valor deve ser o NOP original, pois a escrita foi ignorada
-        check("Escrita ignorada sem debug_en", data_out, 32'h00000013);
+        // -----------------------------------------------------------------
+        // 5. Verifica endereço fora dos limites
+        // -----------------------------------------------------------------
+        addr = 32'h00001000; // Endereço 1024 (fora do range)
+        #10;
+        check("Endereço inválido retorna NOP", data_out, 32'h00000013);
+        
+        debug_addr = 32'h00001000;
+        check("Endereço inválido debug retorna NOP", debug_data_out, 32'h00000013);
 
         $display("\n---- FIM DOS TESTES ----\n");
         $finish;

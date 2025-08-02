@@ -174,9 +174,27 @@
         ],
         "tb":"tb/pipeline/tb_pipeline_load_and_exec.v"
     },
-    "rv32e_cpu": {
+    "pipeline_full":{
+        "sources":[
+            "src/memory/instruction_memory.v",
+            "src/memory/data_memory.v",
+            "src/components/register_file.v",
+
+            "src/components/alu.v",
+            "src/components/immediate_generator.v",
+            "src/control/control_unit.v",
+
+            "src/stages/if_stage.v",
+            "src/stages/id_stage.v",
+            "src/stages/ex_stage.v",
+            "src/stages/mem_stage.v",
+            "src/stages/wb_stage.v"
+        ],
+        "tb":"tb/pipeline/tb_pipeline_full.v"
+    },
+    "rv32i_cpu": {
         "sources": [
-            "src/core/rv32e_cpu.v",
+            "src/core/rv32i_cpu.v",
             "src/core/constants.v",
             "src/stages/if_stage.v",
             "src/stages/id_stage.v",
@@ -191,8 +209,10 @@
             "src/components/register_file.v",
             "src/components/alu.v",
             "src/components/immediate_generator.v",
-            "src/components/pc_generator.v"
+            "src/components/pc_generator.v",
+            "src/memory/data_memory.v",
+            "src/memory/instruction_memory.v"
         ],
-        "tb": "tb/core/tb_rv32e_cpu.v"
+        "tb": "tb/core/tb_rv32i_cpu.v"
     }
 }

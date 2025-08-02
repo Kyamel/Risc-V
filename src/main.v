@@ -7,6 +7,7 @@ module main (
 
     output wire [31:0] debug_pc,
     output wire [31:0] debug_instruction,
+    output wire [31:0] debug_instruction,
     output wire debug_stall,
     output wire debug_flush
 );

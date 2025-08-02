@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module tb_pipeline_load_and_exec();
+module tb_pipeline_full();
 
     // Entradas
     reg clk = 0;
@@ -11,7 +11,9 @@ module tb_pipeline_load_and_exec();
     wire [31:0] debug_instruction;
     wire [31:0] debug_registers [0:31];
     wire [31:0] debug_alu_result;
+    wire [31:0] debug_wb_data;
     wire [31:0] debug_imem_out;
+    wire [31:0] debug_dmem_out;
     
     // Clock (10ns período)
     always #5 clk = ~clk;
@@ -43,6 +45,13 @@ module tb_pipeline_load_and_exec();
     wire [4:0] mem_wb_rd_addr;
     wire [`CONTROL_SIGNALS_WIDTH-1:0] mem_wb_control_signals;
     
+    wire [31:0] dmem_addr;
+    wire [31:0] dmem_data_in;
+    wire [31:0] dmem_data_out;
+    wire dmem_read;
+    wire dmem_write;
+    wire [3:0] dmem_byte_enable;
+
     // Instância da memória de instruções
     instruction_memory #(
         .DEPTH(1024),
@@ -55,6 +64,23 @@ module tb_pipeline_load_and_exec();
         .read_en(imem_read),
         .debug_addr(debug_pc),
         .debug_data_out(debug_imem_out)
+    );
+    
+    // Instância da memória de dados
+    data_memory #(
+        .DEPTH(1024),
+        .INIT_FILE("compiler/data.hex")
+    ) dmem (
+        .clk(clk),
+        .reset(reset),
+        .addr(dmem_addr),
+        .data_in(dmem_data_out),
+        .data_out(dmem_data_in),
+        .read_en(dmem_read),
+        .write_en(dmem_write),
+        .byte_enable(dmem_byte_enable),
+        .debug_addr(dmem_addr),
+        .debug_data_out(debug_dmem_out)
     );
     
     // Instância dos estágios do pipeline
@@ -82,7 +108,7 @@ module tb_pipeline_load_and_exec();
         .if_id_instruction(if_id_instruction),
         .if_id_valid(if_id_valid),
         .mem_wb_rd_addr(mem_wb_rd_addr),
-        .mem_wb_rd_data(mem_wb_control_signals[`CTRL_MEM_TO_REG] ? mem_wb_mem_data : mem_wb_alu_result),
+        .mem_wb_rd_data(debug_wb_data),
         .mem_wb_reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .id_ex_pc(id_ex_pc),
         .id_ex_instruction(id_ex_instruction),
@@ -120,14 +146,31 @@ module tb_pipeline_load_and_exec();
         .branch_target()
     );
     
-    // Estágio MEM mock (simplificado)
-    assign mem_wb_pc = ex_mem_pc;
-    assign mem_wb_alu_result = ex_mem_alu_result;
-    assign mem_wb_mem_data = 32'b0; // Sem acesso a memória de dados neste teste
-    assign mem_wb_rd_addr = ex_mem_rd_addr;
-    assign mem_wb_control_signals = ex_mem_control_signals;
+    mem_stage mem_stage_inst (
+        .clk(clk),
+        .reset(reset),
+        .ex_mem_pc(ex_mem_pc),
+        .ex_mem_alu_result(ex_mem_alu_result),
+        .ex_mem_rs2_data(ex_mem_rs2_data),
+        .ex_mem_rd_addr(ex_mem_rd_addr),
+        .ex_mem_control_signals(ex_mem_control_signals),
+        .dmem_addr(dmem_addr),
+        .dmem_data_in(dmem_data_in),
+        .dmem_data_out(dmem_data_out),
+        .dmem_read(dmem_read),
+        .dmem_write(dmem_write),
+        .dmem_byte_enable(dmem_byte_enable),
+        .mem_wb_pc(mem_wb_pc),
+        .mem_wb_alu_result(mem_wb_alu_result),
+        .mem_wb_mem_data(mem_wb_mem_data),
+        .mem_wb_rd_addr(mem_wb_rd_addr),
+        .mem_wb_control_signals(mem_wb_control_signals)
+    );
     
-    // Banco de registradores real
+    // Atribuição do WB data para debug
+    assign debug_wb_data = mem_wb_control_signals[`CTRL_MEM_TO_REG] ? mem_wb_mem_data : mem_wb_alu_result;
+    
+    // Banco de registradores
     register_file #(
         .WIDTH(32),
         .DEPTH(32)
@@ -137,7 +180,7 @@ module tb_pipeline_load_and_exec();
         .rs1_addr(id_rs1_addr),
         .rs2_addr(id_rs2_addr),
         .rd_addr(mem_wb_rd_addr),
-        .rd_data(mem_wb_control_signals[`CTRL_MEM_TO_REG] ? mem_wb_mem_data : mem_wb_alu_result),
+        .rd_data(debug_wb_data),
         .reg_write(mem_wb_control_signals[`CTRL_REG_WRITE]),
         .rs1_data(id_rs1_data),
         .rs2_data(id_rs2_data),
@@ -154,8 +197,8 @@ module tb_pipeline_load_and_exec();
     
     initial begin
         // Inicialização
-        $dumpfile("pipeline_load_and_exec.vcd");
-        $dumpvars(0, tb_pipeline_load_and_exec);
+        $dumpfile("pipeline_full.vcd");
+        $dumpvars(0, tb_pipeline_full);
         
         reset = 1;
         #20;
@@ -170,28 +213,34 @@ module tb_pipeline_load_and_exec();
         end
         
         $display("\n=== Execução do Pipeline Completo ===");
-        $display("Ciclo |   PC   | Instrução  | RS1  | RS2  | Imm   | ALU Result | RD");
-        $display("------------------------------------------------------------------");
+        $display("Ciclo |   PC   | Instrução  | ALU Res | WB Data  | RD");
+        $display("-----------------------------------------------------");
         
-        // Executa por 15 ciclos
-        for (cycle_count = 0; cycle_count < 15; cycle_count = cycle_count + 1) begin
+        // Executa por 20 ciclos
+        for (cycle_count = 0; cycle_count < 20; cycle_count = cycle_count + 1) begin
             @(posedge clk);
             #1; // Pequeno atraso para estabilização
             
-            $display("%5d | %h | %h | %h | %h | %h | %h | x%d",
+            $display("%5d | %h | %h | %h | %h | x%d",
                    cycle_count,
                    if_id_pc,
                    if_id_instruction,
-                   id_ex_rs1_data,
-                   id_ex_rs2_data,
-                   id_ex_immediate,
                    debug_alu_result,
-                   id_ex_rd_addr);
+                   debug_wb_data,
+                   mem_wb_rd_addr);
         end
         
         $display("\n=== Estado Final dos Registradores ===");
         for (i = 0; i < 32; i = i + 1) begin
             $display("x%2d = %h", i, debug_registers[i]);
+        end
+        
+        $display("\n=== Primeiras Posições da Memória de Dados ===");
+        for (i = 0; i < 8; i = i + 1) begin
+            force dmem.debug_addr = i * 4;
+            #1;
+            $display("dmem[%h] = %h", i * 4, debug_dmem_out);
+            release dmem.debug_addr;
         end
         
         $finish;
