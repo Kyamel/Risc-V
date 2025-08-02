@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module stall_controller (
     // --- Entradas de Eventos ---
     input wire load_use_hazard, 

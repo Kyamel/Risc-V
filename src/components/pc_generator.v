@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module pc_generator (
     input wire clk,
     input wire reset,

@@ -30,18 +30,18 @@ module tb_processor_load_program();
     // Debug registers output
     wire [31:0] debug_registers [0:31];
 
-    // Instantiate instruction memory
-    instruction_memory imem (
+    // Instruction Memory
+    instruction_memory #(
+        .DEPTH(1024),
+        .INIT_FILE("compiler/program.hex")
+    ) imem (
         .clk(clk),
         .reset(reset),
         .addr(imem_addr),
-        .data_out(imem_data_out),
-        .read_en(imem_read_en),
-        .debug_en(debug_en),
-        .debug_addr(debug_addr),
-        .debug_data_in(debug_data_in),
-        .debug_write_en(debug_write_en),
-        .debug_data_out(debug_data_out)
+        .data_out(imem_data),
+        .read_en(imem_read),
+        .debug_addr(debug_pc),
+        .debug_data_out(debug_imem_out)
     );
 
     // Instantiate register file

@@ -1,29 +1,20 @@
 `timescale 1ns / 1ps
 `include "constants.v"
 
-module rv32e_cpu (
+module rv32i_cpu (
     input wire clk,
     input wire reset,
     
-    // Instruction memory interface
-    output wire [31:0] imem_addr,
-    input wire [31:0] imem_data,
-    output wire imem_read,
-    
-    // Data memory interface
-    output wire [31:0] dmem_addr,
-    input wire [31:0] dmem_data_in,
-    output wire [31:0] dmem_data_out,
-    output wire dmem_read,
-    output wire dmem_write,
-    output wire [3:0] dmem_byte_enable,
-    
     // Debug signals
     output wire [31:0] debug_pc,
-    output wire [31:0] debug_registers [0:31],
     output wire [31:0] debug_instruction,
     output wire debug_stall,
-    output wire debug_flush
+    output wire debug_flush,
+
+    // Debug memory access
+    output wire [31:0] debug_registers [0:31],  // RV32E tem 32 registradores
+    output wire [31:0] debug_dmem_out,
+    output wire [31:0] debug_imem_out
 );
 
     // Pipeline stage registers
@@ -75,14 +66,49 @@ module rv32e_cpu (
     wire [31:0] rs2_data;
     wire [4:0] rs1_addr;
     wire [4:0] rs2_addr;
-    
-    // Additional wire declarations
     wire [31:0] wb_data;
-    wire [31:0] ex_mem_alu_result_fwd;
-    wire branch_taken;
-    wire [31:0] branch_target;
-    wire [31:0] instruction;
-    wire [`CONTROL_SIGNALS_WIDTH-1:0] control_signals;
+
+    // Memory interfaces
+    wire [31:0] imem_addr;
+    wire [31:0] imem_data;
+    wire imem_read;
+    wire [31:0] dmem_addr;
+    wire [31:0] dmem_data_in;
+    wire [31:0] dmem_data_out;
+    wire dmem_read;
+    wire dmem_write;
+    wire [3:0] dmem_byte_enable;
+
+    // Instruction Memory
+    instruction_memory #(
+        .DEPTH(1024),
+        .INIT_FILE("compiler/program.hex")
+    ) imem (
+        .clk(clk),
+        .reset(reset),
+        .addr(imem_addr),
+        .data_out(imem_data),
+        .read_en(imem_read),
+        .debug_addr(debug_pc),
+        .debug_data_out(debug_imem_out)
+    );
+
+    // Data Memory
+    data_memory #(
+        .DEPTH(1024),
+        .INIT_FILE("compiler/data.hex")
+    ) dmem (
+        .clk(clk),
+        .reset(reset),
+        .addr(dmem_addr),
+        .data_in(dmem_data_out),
+        .data_out(dmem_data_in),
+        .read_en(dmem_read),
+        .write_en(dmem_write),
+        .byte_enable(dmem_byte_enable),
+        .debug_addr(dmem_addr),
+        .debug_data_out(debug_dmem_out)
+    );
 
     // IF Stage
     if_stage instruction_fetch (
@@ -152,9 +178,8 @@ module rv32e_cpu (
         .forward_b(forward_b),
         .mem_wb_alu_result(mem_wb_alu_result),
         .mem_wb_mem_data(mem_wb_mem_data),
-        .ex_mem_alu_result_fwd(ex_mem_alu_result_fwd),
-        .branch_taken(branch_taken),
-        .branch_target(branch_target)
+        .branch_taken(pc_src),  // Conectado diretamente ao pc_src
+        .branch_target(new_pc)
     );
     
     // MEM Stage
@@ -182,18 +207,12 @@ module rv32e_cpu (
     );
     
     // WB Stage
-    wb_stage wb_stage_inst (
-        .mem_wb_alu_result(mem_wb_alu_result),
-        .mem_wb_mem_data(mem_wb_mem_data),
-        .mem_wb_control_signals(mem_wb_control_signals),
-        .wb_data(wb_data)
-    );
+    assign wb_data = mem_wb_control_signals[`CTRL_MEM_TO_REG] ? mem_wb_mem_data : mem_wb_alu_result;
     
     // Control Unit
-    assign instruction = if_id_instruction;  // Connect IF/ID instruction to control unit
     control_unit control_unit (
-        .instruction(instruction),
-        .control_signals(control_signals)
+        .instruction(if_id_instruction),
+        .control_signals(id_ex_control_signals)  // Conectado diretamente ao ID/EX
     );
     
     // Hazard Detection
@@ -217,19 +236,6 @@ module rv32e_cpu (
         .forward_b(forward_b)
     );
     
-    // Branch Unit
-    branch_unit branch_unit (
-        .id_ex_pc(id_ex_pc),
-        .id_ex_instruction(id_ex_instruction),
-        .id_ex_rs1_data(id_ex_rs1_data),
-        .id_ex_rs2_data(id_ex_rs2_data),
-        .id_ex_immediate(id_ex_immediate),
-        .id_ex_control_signals(id_ex_control_signals),
-        .pc_src(pc_src),
-        .new_pc(new_pc),
-        .flush(flush)
-    );
-    
     // Debug connections
     assign debug_pc = if_id_pc;
     assign debug_instruction = if_id_instruction;
@@ -239,7 +245,7 @@ module rv32e_cpu (
     // Register File (16 registers for RV32E)
     register_file #(
         .WIDTH(32),
-        .DEPTH(32)
+        .DEPTH(32)  // RV32E usa apenas 16 registradores
     ) reg_file (
         .clk(clk),
         .reset(reset),

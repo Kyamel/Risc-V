@@ -11,9 +11,10 @@ const PROGRAM_HEX = "programs/exemplo.hex";
 
 // Lista de arquivos fonte
 const SOURCES = [
-  `${SRC_DIR}/main.v`,
-  `${SRC_DIR}/core/rv32e_cpu.v`,
+  `${SRC_DIR}/sim.v`,
+  `${SRC_DIR}/core/rv32i_cpu.v`,
   `${SRC_DIR}/memory/instruction_memory.v`,
+  `${SRC_DIR}/memory/data_memory.v`,
   `${SRC_DIR}/core/constants.v`,
   `${SRC_DIR}/stages/if_stage.v`,
   `${SRC_DIR}/stages/id_stage.v`,
