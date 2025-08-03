@@ -16,7 +16,7 @@ const BIN_DIR = path.join(BUILD_DIR, "bin");
 const LOG_DIR = path.join(BUILD_DIR, "log");
 
 // Caminho para o arquivo de configuração
-const CONFIG_PATH = path.join(__dirname, 'test_config.json');
+const CONFIG_PATH = path.join(__dirname, 'new.json');
 
 // Carrega configuração dos módulos
 const MODULES = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));

@@ -1,0 +1,24 @@
+{
+    "rv32i_cpu": {
+        "sources": [
+            "src/core/rv32i_cpu.v",
+
+            "src/components/pc_generator.v",
+
+            "src/stages/if_id.v",
+            "src/components/instr_parser.v",
+            "src/components/immediate_data_extractor.v",
+            "src/control/control_unit.v",
+
+            "src/stages/id_ex.v",
+            "src/control/alu_control.v",
+            "src/components/alu.v",
+           
+
+            "src/components/register_file.v",
+            "src/memory/instruction_memory.v"
+
+        ],
+        "tb": "tb/core/tb_rv32i_cpu.v"
+    }
+}

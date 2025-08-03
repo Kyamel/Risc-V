@@ -1,10 +1,20 @@
-addi x4, x0, 4     ; Coloca o valor 3 em x4 (soma 0 + 3)
-addi x5, x0, 3     ; Coloca o valor 3 em x5 (soma 0 + 3)
+addi x1, x0, 1  ; x1 = 1
 nop
 nop
-add x6, x4, x5     ; Soma os valores de x4 e x5, armazena o resultado em x6
+sw x1, 0(x0)    ; armazena 1 em mem[0]
+addi x4, x0, 2  ; x4 = 2
+lw x2, 0(x0)    ; x2 = 1
 nop
-addi x2, x4, -3
-sw x6, 0(x4)      ; Armazena o valor de x6 no endereço apontado por x7
-addi x1, x6, 4
-lw x3, 0(x4)      ; Carrega o valor armazenado no endereço apontado por x7 em x3
+nop
+sll  x5, x4, x2  ; x5 = 2 << 1 = 4
+nop
+nop
+xor  x6, x5, x4 ; x6 = 6
+sw   x4, 4(x0)
+sw   x5, 8(x0)
+nop
+lw   x7, 4(x0)  ; x7 = 2
+lw   x8, 8(x0)  ; x8 = 4
+nop
+nop
+add x9, x7, x8 ; x9 = 6

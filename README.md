@@ -124,3 +124,61 @@ rv32e_processor/
 │   └── instruction_set.md              # Conjunto de instruções  
 │  
 └── Makefile                            # Automatização de build via make  
+
+
+
+
+
+rv32i_processor/  
+├── src/  
+│   ├── core/  
+│   │   ├── rv32e_cpu.v                 # Módulo principal do processador  
+│   │   └── constants.v                 # Definições e constantes  
+│   │  
+│   ├── stages/  
+│   │   ├── if_id.v                     # Pipeline  
+│   │   ├── id_ex.v                     # Pipeline   
+│   │   ├── ex_mem.v                    # Pipeline  
+│   │   ├── mem_wb.v                    # Pipeline  
+│   │  
+│   ├── components/  
+│   │   ├── register_file.v             # Banco de 32 registradores         W  
+│   │   ├── alu.v                       # Unidade Lógica Aritmética         W  
+│   │   ├── immediate_generator.v       # Gerador de imediatos              F  
+│   │   ├── branch_unit.v               # Unidade de branch                 F
+│   │   └── pc_generator.v              # Gerador de PC                     F
+│   │  
+│   ├── control/  
+│   │   ├── control_unit.v              # Unidade de controle principal     F  
+│   │   ├── hazard_detection.v          # Detecção de hazards               F
+│   │   ├── forwarding_unit.v           # Data forwarding                   F
+│   │   └── alu_control.v               # Controle de stalls                
+│   │  
+│   ├── memory/  
+│   │   ├── instruction_memory.v        # Memória de instruções             W  
+│   │   ├── data_memory.v               # Memória de dados                  W  
+│   │  
+│  
+├── tb/  
+│  
+├── scripts/  
+│   ├── build.py                        # Script de compilação  
+│   ├── compile.tcl                     # Script de compilação  
+│   ├── simulate.tcl                    # Script de simulação  
+│   └── synthesis.tcl                   # Script de síntese  
+│  
+├── docs/  
+│   ├── architecture.md                 # Documentação da arquitetura  
+│   ├── pipeline_diagram.svg            # Diagrama do pipeline  
+│   └── instruction_set.md              # Conjunto de instruções  
+│  
+└── Makefile                            # Automatização de build via make  
+
+
+Mapeamento de Opcodes:
+Tipo de Instrução	Opcode (7 bits)	ALUOp	ALUSrc
+R-type	0110011	10	0
+I-type (loads)	0000011	00	1
+S-type (stores)	0100011	00	1
+I-type (arith)	0010011	11	1
+B-type (branches)	1100011	01	0

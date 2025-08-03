@@ -1,58 +1,26 @@
 `timescale 1ns / 1ps
 
 module instruction_memory #(
-    parameter DEPTH = 1024,         // Tamanho em palavras (4KB)
-    parameter INIT_FILE = ""        // Arquivo de inicialização
-) (
-    input  wire        clk,
-    input  wire        reset,
-    
-    // Interface de leitura
-    input  wire [31:0] addr,
-    output reg  [31:0] data_out,
-    input  wire        read_en,
-    
-    // Interface de debug
-    input  wire [31:0] debug_addr,
-    output reg  [31:0] debug_data_out  // Mudado para reg
+    parameter WIDTH     = 32,          // Largura de cada instrução
+    parameter HEIGHT    = 256,         // Quantidade de instruções
+    parameter INIT_FILE = ""           // Caminho do arquivo de inicialização (HEX)
+)(
+    input wire [31:0] instr_addr,      // Endereço da instrução (PC)
+
+    output wire [WIDTH-1:0] instr      // Instrução buscada
 );
 
-    localparam NOP = 32'h00000013;  // addi x0, x0, 0
+    // Memória de instruções
+    reg [WIDTH-1:0] memory [0:HEIGHT-1];
 
-    // Memória principal
-    reg [31:0] mem [0:DEPTH-1];
+    // Leitura combinacional
+    assign instr = memory[instr_addr[31:2]]; // addr >> 2
 
-    // Leitura síncrona
-    always @(posedge clk) begin
-        if (reset) begin
-            data_out <= NOP;
-        end else if (read_en) begin
-            data_out <= mem[addr[31:2]];
-        end else begin
-            data_out <= NOP;
-        end
-    end
-
-    // Leitura assíncrona para debug
-    always @(*) begin
-        if (debug_addr[31:2] < DEPTH) begin
-            debug_data_out = mem[debug_addr[31:2]];
-        end else begin
-            debug_data_out = NOP;
-        end
-    end
-
-    // Inicialização da memória
+    // Inicialização opcional com arquivo
     initial begin
-        integer i;
-        // Preenche com NOPs
-        for (i = 0; i < DEPTH; i = i + 1) begin
-            mem[i] = NOP;
-        end
-
-        // Carrega conteúdo do arquivo se especificado
         if (INIT_FILE != "") begin
-            $readmemh(INIT_FILE, mem);
+            $display("Loading instruction memory from %s", INIT_FILE);
+            $readmemh(INIT_FILE, memory);
         end
     end
 
