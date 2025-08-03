@@ -1,20 +1,14 @@
-addi x1, x0, 1  ; x1 = 1
-nop
-nop
-sw x1, 0(x0)    ; armazena 1 em mem[0]
-addi x4, x0, 2  ; x4 = 2
-lw x2, 0(x0)    ; x2 = 1
-nop
-nop
-sll  x5, x4, x2  ; x5 = 2 << 1 = 4
-nop
-nop
-xor  x6, x5, x4 ; x6 = 6
-sw   x4, 4(x0)
-sw   x5, 8(x0)
-nop
-lw   x7, 4(x0)  ; x7 = 2
-lw   x8, 8(x0)  ; x8 = 4
-nop
-nop
-add x9, x7, x8 ; x9 = 6
+addi x1, x0, 127      # imediato positivo
+addi x5, x0, -1       # imediato negativo (0xFFF em 12 bits)
+addi x3, x0, 0        # imediato zero
+
+sw x3, 16(x0)         # imediato 16
+sw x5, -4(x6)         # imediato -4
+lw x7, 16(x0)          # imediato 8
+
+beq x1, x0, 8         # offset +8 (2 instruções à frente)
+beq x1, x0, -4        # offset -4 (1 instrução atrás)
+
+lui x2, 0x12345       # imediato será 0x12345000
+
+jal x8, 0xABC         # offset +0xABC (0xABC deve ser alinhado e tratado como signed)

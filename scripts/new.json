@@ -20,5 +20,71 @@
 
         ],
         "tb": "tb/core/tb_rv32i_cpu.v"
+    },
+
+    "pipeline_partial": {
+        "sources": [
+            "tb/pipeline/pipeline_partial.v",
+
+            "src/components/pc_generator.v",
+
+            "src/stages/if_id.v",
+            "src/components/instr_parser.v",
+            "src/components/immediate_data_extractor.v",
+            "src/control/control_unit.v",
+
+            "src/stages/id_ex.v",
+            "src/control/alu_control.v",
+            "src/components/alu.v",
+
+            "src/components/register_file.v",
+            "src/memory/instruction_memory.v"
+        ],
+        "tb": "tb/pipeline/tb_pipeline_partial.v"
+    },
+
+    "if_id": {
+        "sources": [
+            "src/stages/if_id.v"
+        ],
+        "tb": "tb/stages/tb_if_id.v"
+    },
+    "id_ex": {
+        "sources": [
+            "src/stages/id_ex.v"
+        ],
+        "tb": "tb/stages/tb_id_ex.v"
+    },
+    "ex_mem": {
+        "sources": [
+            "src/stages/ex_mem.v"
+        ],
+        "tb": "tb/stages/tb_ex_mem.v"
+    },
+
+    "alu_control": {
+        "sources": [
+            "src/control/alu_control.v"
+        ],
+        "tb": "tb/control/tb_alu_control.v"
+    },
+    "alu": {
+        "sources": [
+            "src/components/alu.v"
+        ],
+        "tb": "tb/components/tb_alu.v"
+    },
+    "immediate_data_extractor": {
+        "sources": [
+            "src/components/immediate_data_extractor.v"
+        ],
+        "tb": "tb/components/tb_immediate_data_extractor.v"
+    },
+    "instr_parser": {
+        "sources": [
+            "src/components/instr_parser.v"
+        ],
+        "tb": "tb/components/tb_instr_parser.v"
     }
+
 }

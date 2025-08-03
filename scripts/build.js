@@ -68,7 +68,7 @@ async function runIcarus(moduleName, sources, tbFile) {
             return false;
         }
 
-        console.log(`✅ Teste de '${moduleName}' passou!`);
+        console.log(`✅ Teste de '${moduleName}' compilou! Verifique os testes acima.`);
         return true;
     } catch (error) {
         console.error(`❌ Erro inesperado: ${error.message}`);
@@ -158,7 +158,7 @@ async function main() {
 
     console.log("=".repeat(50));
     console.log(`\n📊 Resumo dos testes:`);
-    console.log(`✅ Passaram: ${passed}`);
+    console.log(`✅ Compilaram: ${passed}`);
     console.log(`❌ Falharam: ${failed}`);
     console.log(`📁 Executáveis: ${path.resolve(BIN_DIR)}`);
     console.log(`📁 Logs: ${path.resolve(LOG_DIR)}`);

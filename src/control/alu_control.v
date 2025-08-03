@@ -1,5 +1,11 @@
 `timescale 1ns / 1ps
 
+
+// ALUOp = 00: instruções de load/store → sempre ADD
+// ALUOp = 01: instruções de branch → geralmente SUB, SLT, SLTU
+// ALUOp = 10: R-type (funct7 + funct3 necessários)
+// ALUOp = 11: I-type (funct3, e às vezes funct7)
+
 module alu_control (
     input wire [1:0] ALUOp,     // Sinal da control unit
     input wire [9:0] Funct,      // {funct7[6:0], funct3[2:0]} da instrução
@@ -7,7 +13,7 @@ module alu_control (
 
     // --------------------------
     // Conecte a esse modulo com:
-    // wire [9:0] funct = {if_id_instr[31:25], if_id_instr[14:12]};
+    // wire [9:0] Funct = {if_id_instr[31:25], if_id_instr[14:12]};
     // --------------------------
 );
 
@@ -27,8 +33,17 @@ module alu_control (
     always @(*) begin
         case (ALUOp)
             2'b00: Op = ADD;  // Para loads/stores (soma de endereços)
-            2'b01: Op = SUB;  // Para branches (subtração para comparação)
-            
+            2'b01: begin // Branches
+                case (Funct[2:0])
+                    3'b000: Op = SUB;  // BEQ
+                    3'b001: Op = SUB;  // BNE
+                    3'b100: Op = SLT;  // BLT
+                    3'b101: Op = SLT;  // BGE
+                    3'b110: Op = SLTU; // BLTU
+                    3'b111: Op = SLTU; // BGEU
+                    default: Op = SUB;
+                endcase
+            end
             // Instruções tipo R e I (aritméticas)
             2'b10, 2'b11: begin
                 case (Funct[2:0])  // funct3
