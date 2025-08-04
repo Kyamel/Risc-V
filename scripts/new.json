@@ -22,9 +22,9 @@
         "tb": "tb/core/tb_rv32i_cpu.v"
     },
 
-    "pipeline_partial": {
+    "pipeline_to_ex": {
         "sources": [
-            "tb/pipeline/pipeline_partial.v",
+           
 
             "src/components/pc_generator.v",
 
@@ -40,7 +40,7 @@
             "src/components/register_file.v",
             "src/memory/instruction_memory.v"
         ],
-        "tb": "tb/pipeline/tb_pipeline_partial.v"
+        "tb": "tb/pipeline/tb_pipeline_to_ex.v"
     },
 
     "fetch_and_decode": {
@@ -98,6 +98,12 @@
             "src/components/instr_parser.v"
         ],
         "tb": "tb/components/tb_instr_parser.v"
+    },
+    "control_unit": {
+        "sources": [
+            "src/control/control_unit.v"
+        ],
+        "tb": "tb/control/tb_control_unit.v"
     }
 
 }

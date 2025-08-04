@@ -23,6 +23,8 @@ module tb_id_ex();
     reg [4:0] id_rs2;
     reg [4:0] id_rd;
     
+
+    
     wire [31:0] ex_read_data_1;
     wire [31:0] ex_read_data_2;
     wire [31:0] ex_imm_data;
