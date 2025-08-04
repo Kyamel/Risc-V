@@ -1,62 +1,44 @@
 `timescale 1ns / 1ps
-`include "constants.v"
 
 module register_file #(
     parameter WIDTH = 32,
-    parameter DEPTH = 32   // x0-x31
+    parameter DEPTH = 32
 )(
-    input wire clk,
-    input wire reset,
-    
-    // Interface de leitura
-    input wire [4:0] rs1_addr,
-    input wire [4:0] rs2_addr,
-    output reg [WIDTH-1:0] rs1_data,
-    output reg [WIDTH-1:0] rs2_data,
-    
-    // Interface de escrita
-    input wire [4:0] rd_addr,
-    input wire [WIDTH-1:0] rd_data,
-    input wire reg_write,
-    
-    // Debug
-    output wire [WIDTH-1:0] debug_registers [0:DEPTH-1]
+    input wire                  clk,
+    input wire                  rst,  // Reset assíncrono (1 = reset)
+
+    input wire [4:0]            rs1,
+    input wire [4:0]            rs2,
+    input wire [4:0]            rd,
+    input wire [WIDTH-1:0]      wd,
+    input wire                  reg_write,
+
+    output wire [WIDTH-1:0]     read_data_1,
+    output wire [WIDTH-1:0]     read_data_2,
+
+    input wire [$clog2(DEPTH)-1:0] debug_read_index,
+    output wire [WIDTH-1:0]     debug_data_out
 );
 
-    // Banco de registradores (x0 não é armazenado, é hardwired para zero)
-    reg [WIDTH-1:0] regs [1:DEPTH-1];
+    reg [WIDTH-1:0] regs [0:DEPTH-1];
+    integer i;
 
-    // Conexão de debug
-    assign debug_registers[0] = '0;  // x0 sempre zero
-    generate // 'gen_registers'
-        for (genvar i = 1; i < DEPTH; i++) begin
-            assign debug_registers[i] = regs[i];
-        end
-    endgenerate
-
-    // Escrita síncrona
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            // Reset assíncrono
-            for (int i = 1; i < DEPTH; i++) begin
-                regs[i] <= '0;
+    // Reset assíncrono + escrita síncrona
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            // Zera todos os registradores exceto x0 (que é hardwired para 0)
+            for (i = 1; i < DEPTH; i = i + 1) begin
+                regs[i] <= 0;
             end
-        end else if (reg_write && rd_addr != '0) begin
-            regs[rd_addr] <= rd_data;  // Usa todos os 5 bits do endereço
+        end
+        else if (reg_write && rd != 5'd0) begin
+            regs[rd] <= wd;
         end
     end
 
-    // Leitura combinacional com forwarding
-    always @(*) begin
-        // Forwarding condicional para rs1
-        rs1_data = (rs1_addr == '0) ? '0 :
-                  ((reg_write && (rs1_addr == rd_addr)) ? rd_data :
-                  regs[rs1_addr]);
-
-        // Forwarding condicional para rs2
-        rs2_data = (rs2_addr == '0) ? '0 :
-                  ((reg_write && (rs2_addr == rd_addr)) ? rd_data :
-                  regs[rs2_addr]);
-    end
+    // Leituras assíncronas
+    assign read_data_1 = (rs1 == 5'd0) ? 0 : regs[rs1];  // x0 é sempre 0
+    assign read_data_2 = (rs2 == 5'd0) ? 0 : regs[rs2];  // x0 é sempre 0
+    assign debug_data_out = (debug_read_index == 5'd0) ? 0 : regs[debug_read_index];
 
 endmodule

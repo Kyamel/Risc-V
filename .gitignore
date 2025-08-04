@@ -13,5 +13,6 @@ qtbuild/
 *.bin
 *.hex
 *.stash
+*.log
 
 processor_state.json

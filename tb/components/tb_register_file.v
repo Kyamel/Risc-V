@@ -2,91 +2,111 @@
 
 module tb_register_file();
 
-    reg clk = 0;
-    // CORREÇÃO 1: Nome da porta mudado de 'rst' para 'reset'
-    reg reset = 1;
+    // Parâmetros
+    parameter WIDTH = 32;
+    parameter DEPTH = 32;
+    parameter CLK_PERIOD = 10; // 10 ns = 100 MHz
 
-    // CORREÇÃO 2: Largura do endereço mudada de [3:0] para [4:0]
-    reg [4:0] rs1_addr, rs2_addr;
-    wire [31:0] rs1_data, rs2_data;
+    parameter GREEN = "\033[0;32m";
+    parameter RED = "\033[0;31m";
+    parameter NC = "\033[0m"; // No Color
 
-    // CORREÇÃO 2: Largura do endereço mudada de [3:0] para [4:0]
-    reg [4:0] rd_addr;
-    reg [31:0] rd_data;
-    // CORREÇÃO 1: Nome da porta mudado de 'rd_we' para 'reg_write'
+    // Sinais
+    reg clk;
+    reg rst;
+    reg [4:0] rs1, rs2, rd;
+    reg [WIDTH-1:0] wd;
     reg reg_write;
+    wire [WIDTH-1:0] read_data_1, read_data_2;
+    wire [WIDTH-1:0] debug_data_out;
 
-    register_file uut (
+    // Instância do DUT
+    register_file #(
+        .WIDTH(WIDTH),
+        .DEPTH(DEPTH)
+    ) uut (
         .clk(clk),
-        // Conectando ao port 'reset'
-        .reset(reset),
-        .rs1_addr(rs1_addr),
-        .rs2_addr(rs2_addr),
-        .rs1_data(rs1_data),
-        .rs2_data(rs2_data),
-        .rd_addr(rd_addr),
-        .rd_data(rd_data),
-        // Conectando ao port 'reg_write'
-        .reg_write(reg_write)
-        // A porta de debug não precisa ser conectada no testbench
-        // .debug_registers() 
+        .rst(rst),
+        .rs1(rs1),
+        .rs2(rs2),
+        .rd(rd),
+        .wd(wd),
+        .reg_write(reg_write),
+        .read_data_1(read_data_1),
+        .read_data_2(read_data_2),
+        .debug_data_out(debug_data_out)
     );
 
-    // Geração de Clock
-    always #5 clk = ~clk;
+    // Geração de clock
+    always #(CLK_PERIOD/2) clk = ~clk;
 
+    // Task para verificação com cores (padrão [PASS]/[FAIL])
+    task automatic verify;
+        input string test_name;
+        input [WIDTH-1:0] observed;
+        input [WIDTH-1:0] expected;
+        begin
+            if (observed === expected) begin
+                $display("%s[PASS]%s %s: Obtido = 0x%h", GREEN, NC,
+                         test_name, observed);
+            end else begin
+                $display("%s[FAIL]%s %s: Esperado = 0x%h, Obtido = 0x%h", RED, NC,
+                         test_name, expected, observed);
+            end
+        end
+    endtask
+
+    // Inicialização
     initial begin
-        $display("=== Testando register_file ===");
-        reset = 1;
+        clk = 0;
+        rst = 1; // Ativa reset inicial
+        rs1 = 0;
+        rs2 = 0;
+        rd = 0;
+        wd = 0;
         reg_write = 0;
-        rs1_addr = 0;
-        rs2_addr = 0;
-        rd_addr = 0;
-        rd_data = 0;
 
-        #20;
-        reset = 0;
+        // Desativa reset após 2 ciclos de clock
+        #(2*CLK_PERIOD);
+        rst = 0;
 
-        // Testa escrita e leitura
-        // 1) Escreve valor em registrador 1 (x1)
-        rd_addr = 5'd1;
-        rd_data = 32'hDEADBEEF;
+        // Teste 1: Verificação do Reset (todos os registradores exceto x0 devem ser 0)
+        $display("\n=== Teste 1: Verificação do Reset ===");
+        for (int i = 1; i < DEPTH; i++) begin
+            rs1 = i;
+            #1; // Delta cycle para leitura assíncrona
+            verify($sformatf("Reset do registrador x%0d", i), read_data_1, 0);
+        end
+
+        // Teste 2: Escrita e leitura em x5
+        $display("\n=== Teste 2: Escrita e Leitura ===");
         reg_write = 1;
-        #10;
+        rd = 5'd5;
+        wd = 32'hDEADBEEF;
+        #CLK_PERIOD; // Espera escrita síncrona
 
-        reg_write = 0;
-        #10;
+        rs1 = 5'd5;
+        #1;
+        verify("Escrita em x5", read_data_1, wd);
 
-        // Lê registradores 1 (x1) e 2 (x2)
-        rs1_addr = 5'd1;
-        rs2_addr = 5'd2;
-        #10;
+        // Teste 3: x0 é sempre zero (hardwired)
+        $display("\n=== Teste 3: Verificação de x0 ===");
+        rd = 5'd0;    // Tentativa de escrita em x0
+        wd = 32'h12345678;
+        #CLK_PERIOD;
+        rs1 = 5'd0;
+        #1;
+        verify("Leitura de x0 (hardwired)", read_data_1, 0);
 
-        if (rs1_data === 32'hDEADBEEF) 
-            $display("\033[32m[PASS]\033[0m Leitura rs1 correto: %h", rs1_data);
-        else
-            $display("\033[31m[FAIL]\033[0m Leitura rs1 errado: %h", rs1_data);
-
-        if (rs2_data === 32'd0) 
-            $display("\033[32m[PASS]\033[0m Leitura rs2 correto (zero): %h", rs2_data);
-        else
-            $display("\033[31m[FAIL]\033[0m Leitura rs2 errado: %h", rs2_data);
-
-        // Testa que registrador 0 (x0) é sempre zero e não pode ser escrito
-        rd_addr = 5'd0;
-        rd_data = 32'hFFFFFFFF;
-        reg_write = 1;
-        #10;
-        reg_write = 0;
-        rs1_addr = 0;
-        #10;
-        if (rs1_data === 32'd0)
-            $display("\033[32m[PASS]\033[0m Registrador 0 é imutável e zero");
-        else
-            $display("\033[31m[FAIL]\033[0m Registrador 0 alterado: %h", rs1_data);
-
-        $display("Fim do teste");
+        // Finalização
+        $display("\n=== Todos os testes concluídos ===");
         $finish;
+    end
+
+    // Monitoramento opcional (para debug)
+    initial begin
+        $monitor("Tempo: %t | rs1=%0d (0x%h) | rs2=%0d (0x%h) | rd=%0d (wd=0x%h) | reg_write=%b",
+                 $time, rs1, read_data_1, rs2, read_data_2, rd, wd, reg_write);
     end
 
 endmodule
