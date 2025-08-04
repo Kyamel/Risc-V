@@ -1,28 +1,16 @@
 `timescale 1ns / 1ps
+`include "alu_defines.vh"
 
 module tb_alu_control();
-
-    // Parâmetros para cores (ANSI escape codes)
-    parameter GREEN = "\033[0;32m";
-    parameter RED = "\033[0;31m";
-    parameter NC = "\033[0m"; // No Color
-    
-    // Parâmetros de operações ALU
-    parameter ADD  = 4'b0000;
-    parameter SUB  = 4'b0001;
-    parameter SLL  = 4'b0010;
-    parameter SLT  = 4'b0011;
-    parameter SLTU = 4'b0100;
-    parameter XOR  = 4'b0101;
-    parameter SRL  = 4'b0110;
-    parameter SRA  = 4'b0111;
-    parameter OR   = 4'b1000;
-    parameter AND  = 4'b1001;
 
     // Sinais de entrada
     reg [1:0] ALUOp;
     reg [9:0] Funct;
-    
+
+    parameter GREEN = "\033[0;32m";
+    parameter RED   = "\033[0;31m";
+    parameter NC    = "\033[0m";
+
     // Sinais de saída
     wire [3:0] Op;
     
@@ -38,16 +26,17 @@ module tb_alu_control();
         input [3:0] opcode;
         begin
             case (opcode)
-                ADD:  return "ADD";
-                SUB:  return "SUB";
-                SLL:  return "SLL";
-                SLT:  return "SLT";
-                SLTU: return "SLTU";
-                XOR:  return "XOR";
-                SRL:  return "SRL";
-                SRA:  return "SRA";
-                OR:   return "OR";
-                AND:  return "AND";
+                `ALU_ADD:  return "ADD";
+                `ALU_SUB:  return "SUB";
+                `ALU_SLL:  return "SLL";
+                `ALU_SLT:  return "SLT";
+                `ALU_SLTU: return "SLTU";
+                `ALU_XOR:  return "XOR";
+                `ALU_SRL:  return "SRL";
+                `ALU_SRA:  return "SRA";
+                `ALU_OR:   return "OR";
+                `ALU_AND:  return "AND";
+                `ALU_LUI:  return "LUI";
                 default: return "UNKNOWN";
             endcase
         end
@@ -78,7 +67,7 @@ module tb_alu_control();
         ALUOp = 2'b00;
         Funct = 10'bxxxxxxxxxx;
         #10;
-        check_operation(ADD, "Load/Store");
+        check_operation(`ALU_ADD, "Load/Store");
         
         // Teste 2: Branches
         ALUOp = 2'b01;
@@ -86,32 +75,32 @@ module tb_alu_control();
         // BEQ
         Funct = 10'bxxxxxxx000;
         #10;
-        check_operation(SUB, "BEQ");
+        check_operation(`ALU_SUB, "BEQ");
         
         // BNE
         Funct = 10'bxxxxxxx001;
         #10;
-        check_operation(SUB, "BNE");
+        check_operation(`ALU_SUB, "BNE");
         
         // BLT
         Funct = 10'bxxxxxxx100;
         #10;
-        check_operation(SLT, "BLT");
+        check_operation(`ALU_SLT, "BLT");
         
         // BGE
         Funct = 10'bxxxxxxx101;
         #10;
-        check_operation(SLT, "BGE");
+        check_operation(`ALU_SLT, "BGE");
         
         // BLTU
         Funct = 10'bxxxxxxx110;
         #10;
-        check_operation(SLTU, "BLTU");
+        check_operation(`ALU_SLTU, "BLTU");
         
         // BGEU
         Funct = 10'bxxxxxxx111;
         #10;
-        check_operation(SLTU, "BGEU");
+        check_operation(`ALU_SLTU, "BGEU");
         
         // Teste 3: Operações Aritméticas
         ALUOp = 2'b10;
@@ -119,47 +108,47 @@ module tb_alu_control();
         // ADD (funct7=0000000)
         Funct = 10'b0000000000;
         #10;
-        check_operation(ADD, "ADD");
+        check_operation(`ALU_ADD, "ADD");
         
         // SUB (funct7=0100000)
         Funct = 10'b0100000000;
         #10;
-        check_operation(SUB, "SUB");
+        check_operation(`ALU_SUB, "SUB");
         
         // SLL
         Funct = 10'b0000000001;
         #10;
-        check_operation(SLL, "SLL");
+        check_operation(`ALU_SLL, "SLL");
         
         // SLT
         Funct = 10'b0000000010;
         #10;
-        check_operation(SLT, "SLT");
+        check_operation(`ALU_SLT, "SLT");
         
         // XOR
         Funct = 10'b0000000100;
         #10;
-        check_operation(XOR, "XOR");
+        check_operation(`ALU_XOR, "XOR");
         
         // SRL
         Funct = 10'b0000000101;
         #10;
-        check_operation(SRL, "SRL");
+        check_operation(`ALU_SRL, "SRL");
         
         // SRA
         Funct = 10'b0100000101;
         #10;
-        check_operation(SRA, "SRA");
+        check_operation(`ALU_SRA, "SRA");
         
         // OR
         Funct = 10'b0000000110;
         #10;
-        check_operation(OR, "OR");
+        check_operation(`ALU_OR, "OR");
         
         // AND
         Funct = 10'b0000000111;
         #10;
-        check_operation(AND, "AND");
+        check_operation(`ALU_AND, "AND");
         
         // Teste 4: Operações Imediatas (ALUOp = 11)
         ALUOp = 2'b11;
@@ -167,42 +156,42 @@ module tb_alu_control();
         // ADDI
         Funct = 10'bxxxxxxx000;
         #10;
-        check_operation(ADD, "ADDI");
+        check_operation(`ALU_ADD, "ADDI");
         
         // SLLI
         Funct = 10'bxxxxxxx001;
         #10;
-        check_operation(SLL, "SLLI");
+        check_operation(`ALU_SLL, "SLLI");
         
         // SLTI
         Funct = 10'bxxxxxxx010;
         #10;
-        check_operation(SLT, "SLTI");
+        check_operation(`ALU_SLT, "SLTI");
         
         // XORI
         Funct = 10'bxxxxxxx100;
         #10;
-        check_operation(XOR, "XORI");
+        check_operation(`ALU_XOR, "XORI");
         
         // SRLI
         Funct = 10'b0000000101;
         #10;
-        check_operation(SRL, "SRLI");
+        check_operation(`ALU_SRL, "SRLI");
         
         // SRAI
         Funct = 10'b0100000101;
         #10;
-        check_operation(SRA, "SRAI");
+        check_operation(`ALU_SRA, "SRAI");
         
         // ORI
         Funct = 10'bxxxxxxx110;
         #10;
-        check_operation(OR, "ORI");
+        check_operation(`ALU_OR, "ORI");
         
         // ANDI
         Funct = 10'bxxxxxxx111;
         #10;
-        check_operation(AND, "ANDI");
+        check_operation(`ALU_AND, "ANDI");
         
         $display("\n=== Fim dos Testes ===");
         $finish;

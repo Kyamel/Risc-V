@@ -7,47 +7,36 @@ module control_unit (
 );
 
     always @(*) begin
-        // Valores padrão
-        ALUOp = 2'b00;  // ADD para loads/stores
-        ALUSrc = 1'b0;  // Registrador por padrão
+        // Default values
+        ALUOp = 2'b00;
+        ALUSrc = 1'b0;
         
         case (opcode)
-            // Instruções tipo R (ADD, SUB, AND, OR, etc.)
-            7'b0110011: begin
-                ALUOp = 2'b10;  // Precisa olhar funct3/funct7
-                ALUSrc = 1'b0;  // Usa registradores
-            end
+            // R-type
+            7'b0110011: begin ALUOp = 2'b10; ALUSrc = 1'b0; end
             
-            // Loads (LW)
-            7'b0000011: begin
-                ALUOp = 2'b00;  // ADD para cálculo de endereço
-                ALUSrc = 1'b1;  // Usa imediato
-            end
+            // I-type (ALU)
+            7'b0010011: begin ALUOp = 2'b11; ALUSrc = 1'b1; end
             
-            // Stores (SW)
-            7'b0100011: begin
-                ALUOp = 2'b00;  // ADD para cálculo de endereço
-                ALUSrc = 1'b1;  // Usa imediato
-            end
+            // Loads
+            7'b0000011: begin ALUOp = 2'b00; ALUSrc = 1'b1; end
             
-            // Operações imediatas (ADDI, ANDI, ORI, etc.)
-            7'b0010011: begin
-                ALUOp = 2'b11;  // Precisa olhar funct3
-                ALUSrc = 1'b1;  // Usa imediato
-            end
+            // Stores
+            7'b0100011: begin ALUOp = 2'b00; ALUSrc = 1'b1; end
             
-            // Branches (BEQ, BNE, etc.)
-            7'b1100011: begin
-                ALUOp = 2'b01;  // Subtração para comparação
-                ALUSrc = 1'b0;  // Usa registradores
-            end
+            // Branches
+            7'b1100011: begin ALUOp = 2'b01; ALUSrc = 1'b0; end
             
-            // Default mantém os valores padrão
-            default: begin
-                ALUOp = 2'b00;
-                ALUSrc = 1'b0;
-            end
+            // JAL
+            7'b1101111: begin ALUOp = 2'b00; ALUSrc = 1'b1; end
+            
+            // JALR
+            7'b1100111: begin ALUOp = 2'b00; ALUSrc = 1'b1; end
+            
+            // LUI/AUIPC
+            7'b0110111, 7'b0010111: begin ALUOp = 2'b00; ALUSrc = 1'b1; end
+            
+            default: begin ALUOp = 2'b00; ALUSrc = 1'b0; end
         endcase
     end
-
 endmodule

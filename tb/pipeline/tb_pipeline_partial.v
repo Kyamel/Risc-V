@@ -163,9 +163,35 @@ module tb_pipeline_partial();
                         default: $write("R-type unknown (funct3=0x%0h)", funct3);
                     endcase
                 end
-                7'b0000011: $write("Load instruction"); // Load
-                7'b0100011: $write("Store instruction"); // Store
-                7'b1100011: $write("Branch instruction"); // Branch
+                7'b0000011: begin // Load instructions
+                    case (funct3)
+                        3'b000: $write("lb x%0d, %0d(x%0d)", rd, imm, rs1);
+                        3'b001: $write("lh x%0d, %0d(x%0d)", rd, imm, rs1);
+                        3'b010: $write("lw x%0d, %0d(x%0d)", rd, imm, rs1);
+                        3'b100: $write("lbu x%0d, %0d(x%0d)", rd, imm, rs1);
+                        3'b101: $write("lhu x%0d, %0d(x%0d)", rd, imm, rs1);
+                        default: $write("Load unknown (funct3=0x%0h)", funct3);
+                    endcase
+                end
+                7'b0100011: begin // Store instructions
+                    case (funct3)
+                        3'b000: $write("sb x%0d, %0d(x%0d)", rs2, imm, rs1);
+                        3'b001: $write("sh x%0d, %0d(x%0d)", rs2, imm, rs1);
+                        3'b010: $write("sw x%0d, %0d(x%0d)", rs2, imm, rs1);
+                        default: $write("Store unknown (funct3=0x%0h)", funct3);
+                    endcase
+                end
+                7'b1100011: begin // Branch instructions
+                    case (funct3)
+                        3'b000: $write("beq x%0d, x%0d, %0d", rs1, rs2, imm);
+                        3'b001: $write("bne x%0d, x%0d, %0d", rs1, rs2, imm);
+                        3'b100: $write("blt x%0d, x%0d, %0d", rs1, rs2, imm);
+                        3'b101: $write("bge x%0d, x%0d, %0d", rs1, rs2, imm);
+                        3'b110: $write("bltu x%0d, x%0d, %0d", rs1, rs2, imm);
+                        3'b111: $write("bgeu x%0d, x%0d, %0d", rs1, rs2, imm);
+                        default: $write("Branch unknown (funct3=0x%0h)", funct3);
+                    endcase
+                end
                 7'b1101111: $write("jal x%0d, %0d", rd, imm); // JAL
                 7'b1100111: $write("jalr x%0d, x%0d, %0d", rd, rs1, imm); // JALR
                 7'b0110111: $write("lui x%0d, 0x%05h", rd, imm); // LUI

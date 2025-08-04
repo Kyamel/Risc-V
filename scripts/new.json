@@ -43,6 +43,19 @@
         "tb": "tb/pipeline/tb_pipeline_partial.v"
     },
 
+    "fetch_and_decode": {
+        "sources": [
+            "src/memory/instruction_memory.v",
+
+            "src/components/instr_parser.v",
+            "src/components/immediate_data_extractor.v",
+            
+            "src/control/control_unit.v",
+            "src/control/alu_control.v"
+        ],
+        "tb": "tb/pipeline/tb_fetch_and_decode.v"
+    },
+
     "if_id": {
         "sources": [
             "src/stages/if_id.v"
