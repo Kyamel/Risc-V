@@ -64,12 +64,12 @@ module tb_instr_parser();
         // Teste 4: SW x3, 16(x4)
         instr = 32'h00322823;
         #10;
-        check_parser(7'b0100011, 5'd4, 5'd3, 5'd5, "SW x3,16(x4)");
+        check_parser(7'b0100011, 5'd4, 5'd3, 5'd0, "SW x3,16(x4)");
         
         // Teste 5: SW x5, -4(x6)
         instr = 32'hfe532e23;
         #10;
-        check_parser(7'b0100011, 5'd6, 5'd5, 5'd7, "SW x5,-4(x6)");
+        check_parser(7'b0100011, 5'd6, 5'd5, 5'd0, "SW x5,-4(x6)");
         
         // Teste 6: LW x7, 8(x8)
         instr = 32'h00842383;

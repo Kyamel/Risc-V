@@ -39,7 +39,7 @@ module instr_parser (
                 /* rtype/default */ instr[24:20];
 
     assign rd = is_itype ? instr[11:7] :
-               is_stype ? instr[11:7] : // Not actually used in S-type, but we extract it
+               is_stype ? 5'b0 : // Not actually used in S-type, but we extract it
                is_btype ? 5'b0 :
                is_utype ? instr[11:7] :
                is_jtype ? instr[11:7] :
