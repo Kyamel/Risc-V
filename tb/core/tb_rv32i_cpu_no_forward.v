@@ -252,9 +252,9 @@ module tb_rv32i_cpu_no_forward();
             $display("");
             
             // EX Stage
-            $write("%sEX:%s rs1=x%0d(0x%08h) %s=0x%08h ", 
-                  YELLOW, NC, ex_rs1, ex_read_data_1, 
-                  ex_ALUSrc ? "Imm" : "rs2", alu_b_input);
+            $write("%sEX:%s rs1=x%0d(0x%08h) rs2=x%0d(0x%08h) rd=x%0d ", 
+                  YELLOW, NC, ex_rs1, ex_read_data_1, ex_rs2, ex_read_data_2, ex_rd);
+            $write("%s=0x%08h ", ex_ALUSrc ? "Imm" : "rs2", alu_b_input);
             $write("(ALU %s) -> Result=0x%08h | Zero=%b | rd=x%0d", 
                   get_alu_op_name(ALUOperation), alu_result, alu_zero, ex_rd);
             $display("");

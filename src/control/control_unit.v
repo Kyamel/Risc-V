@@ -66,18 +66,23 @@ module control_unit (
                 Branch = 1'b1;      // This is a branch instruction
             end
             
-            // LUI (Load Upper Immediate)
+             // LUI (Load Upper Immediate)
             7'b0110111: begin
-                ALUOp = 2'b11;     // Pass immediate to output
+                ALUOp = 2'b00;      // CORREÇÃO: usar ADD em vez de 11
                 ALUSrc = 1'b1;      // Use immediate
                 RegWrite = 1'b1;    // Enable register write
+                // Para LUI, queremos que ALU faça: 0 + immediate
+                // onde immediate já vem com os 12 bits inferiores zerados
             end
             
             // AUIPC (Add Upper Immediate to PC)
             7'b0010111: begin
-                ALUOp = 2'b00;     // Addition
+                ALUOp = 2'b00;      // Addition: PC + immediate
                 ALUSrc = 1'b1;      // Use immediate
                 RegWrite = 1'b1;    // Enable register write
+                /* NOTA: Para AUIPC, seria necessário um mux adicional 
+                para selecionar PC em vez de rs1 como entrada A da ALU.
+                Por simplicidade, pode ser implementado posteriormente. */
             end
             
             // JAL (Jump and Link)

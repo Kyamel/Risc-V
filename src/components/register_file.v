@@ -24,7 +24,7 @@ module register_file #(
     integer i;
 
     // Reset assíncrono + escrita síncrona
-    always @(negedge clk or negedge rst) begin
+    always @(posedge clk or posedge rst) begin
         if (rst) begin
             // Zera todos os registradores exceto x0 (que é hardwired para 0)
             for (i = 1; i < DEPTH; i = i + 1) begin
