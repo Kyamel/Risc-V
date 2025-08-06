@@ -159,12 +159,21 @@ module rv32i_cpu_no_forward #(
     
     // WB Stage signals
     wire [31:0] wb_write_data;
-    
+
+
+    // Novo cálculo do próximo PC
+    wire [31:0] pc_next;
+    wire mem_alu_zero;
+    wire [31:0] pc_plus_4;
+    wire [31:0] branch_target;
+    wire        branch_taken;
+    wire [31:0] pc_plus_4_if;
+
     // ========== IF Stage ==========
     pc_generator pc_gen (
         .clk(clk),
         .rst(rst),
-        .pc_in(pc_if + 4), // Simple increment for testing (no branch logic yet)
+        .pc_in(pc_next), // Simple increment for testing (no branch logic yet)
         .pc_out(pc_if)
     );
     
@@ -174,6 +183,8 @@ module rv32i_cpu_no_forward #(
         .instr_addr(pc_if),
         .instr(instruction_if)
     );
+
+    assign pc_plus_4 = pc_if + 4;
     
     // ========== IF/ID Pipeline Register ==========
     if_id if_id_reg (
@@ -275,6 +286,8 @@ module rv32i_cpu_no_forward #(
         .ex_RegWrite(ex_RegWrite),
         .ex_MemtoReg(ex_MemtoReg)
     );
+
+    
     
     // ========== EX Stage ==========
     alu_control alu_ctrl (
@@ -282,7 +295,7 @@ module rv32i_cpu_no_forward #(
         .Funct({funct7, funct3}),
         .Op(ALUOperation)
     );
-    
+
     // ALU input selection
     assign alu_b_input = ex_ALUSrc ? ex_imm_data : ex_read_data_2;
     // Forwarding logic is not implemented yet, so we use ex_read_data_2 directly
@@ -294,9 +307,9 @@ module rv32i_cpu_no_forward #(
         .Result(alu_result),
         .Zero(alu_zero)
     );
-    
-    // Branch address calculation (PC + immediate)
-    assign ex_adder_out = ex_pc_out + ex_imm_data;
+
+     // PC
+    assign branch_target = ex_pc_out + (ex_imm_data << 1); 
     
     // ========== EX/MEM Pipeline Register ==========
     ex_mem ex_mem_reg (
@@ -311,8 +324,9 @@ module rv32i_cpu_no_forward #(
         .ex_RegWrite(ex_RegWrite),
         .ex_MemtoReg(ex_MemtoReg),
         // Data from EX stage
-        .ex_adder_out(ex_adder_out),
+        .ex_adder_out(branch_target),
         .ex_result(alu_result),
+        .ex_alu_zero(alu_zero),
         .ex_rd(ex_rd),
         .ex_read_data_2_mux(ex_read_data_2), // No forwarding yet
         // Outputs to MEM stage
@@ -320,6 +334,7 @@ module rv32i_cpu_no_forward #(
         .mem_write_data(mem_write_data),
         .mem_rd(mem_rd),
         .mem_adder_out(mem_adder_out),
+        .mem_alu_zero(mem_alu_zero), // Pass through ALU zero flag
         // Control signals to MEM stage
         .mem_Branch(mem_Branch),
         .mem_MemRead(mem_MemRead),
@@ -327,7 +342,13 @@ module rv32i_cpu_no_forward #(
         .mem_RegWrite(mem_RegWrite),
         .mem_MemtoReg(mem_MemtoReg)
     );
+
+    // Decisão de branch (AND entre zero flag e sinal de branch)
+    assign branch_taken = mem_alu_zero & mem_Branch; // Branch decision based on ALU zero flag and branch control signal
     
+    // MUX para seleção do próximo PC
+    assign pc_next = branch_taken ? mem_adder_out : pc_plus_4;
+
     // ========== MEM Stage ==========
     data_memory #(
         .WIDTH(32),

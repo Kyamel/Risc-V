@@ -16,11 +16,13 @@ module ex_mem (
     // Entradas do estágio EX
     input wire [31:0]  ex_adder_out,       // PC + (imm << 1) (vem do somador de branch)
     input wire [31:0]  ex_result,          // Resultado da ALU (vai para memória de dados)
+    input wire         ex_alu_zero,          // Indica se o segundo operando da ALU é imediato
     input wire [4:0]   ex_rd,              // Registrador destino (vem de id_ex)
     input wire [31:0]  ex_read_data_2_mux, // Dado para escrita (vem do mux de forwarding)
     
     // Saídas para o estágio MEM
     output reg [31:0]  mem_addr,           // Endereço para memória de dados (ALU Result)
+    output reg        mem_alu_zero, 
     output reg [31:0]  mem_write_data,     // Dado para escrita na memória
     output reg [4:0]   mem_rd,             // Registrador destino (para WB e forwarding)
     output reg [31:0]  mem_adder_out,      // PC + offset (para cálculo de branch)
@@ -56,6 +58,7 @@ module ex_mem (
             mem_write_data <= ex_read_data_2_mux; // Dado para escrita na memória
             mem_rd         <= ex_rd;              // Registrador destino
             mem_adder_out  <= ex_adder_out;      // PC + offset para branch
+            mem_alu_zero   <= ex_alu_zero;        // Passa o sinal de zero da ALU
             
             // Pass control signals through pipeline
             mem_Branch     <= ex_Branch;

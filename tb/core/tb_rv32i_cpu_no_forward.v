@@ -260,7 +260,7 @@ module tb_rv32i_cpu_no_forward();
             $display("");
             
             // MEM Stage
-            $write("%sMEM:%s Addr=0x%08h ", YELLOW, NC, mem_addr);
+            $write("%sMEM:%s Addr=0x%08h Branch Target=0x%08h ", YELLOW, NC, mem_addr, cpu.branch_target);
             if (mem_MemRead) 
                 $write("READ -> 0x%08h ", mem_read_data);
             else if (mem_MemWrite) 
