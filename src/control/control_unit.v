@@ -9,6 +9,7 @@ module control_unit (
     
     // MEM stage control signals
     output reg Branch,          // Branch instruction
+    output reg Jump,            // Jump instruction (JAL/JALR)
     output reg MemRead,         // Memory read enable
     output reg MemWrite,        // Memory write enable
     
@@ -22,6 +23,7 @@ module control_unit (
         ALUOp = 2'b00;
         ALUSrc = 1'b0;
         Branch = 1'b0;
+        Jump = 1'b0;
         MemRead = 1'b0;
         MemWrite = 1'b0;
         RegWrite = 1'b0;
@@ -30,22 +32,21 @@ module control_unit (
         case (opcode)
             // R-type instructions (add, sub, and, or, xor, sll, srl, sra, slt, sltu)
             7'b0110011: begin
-                ALUOp = 2'b10;     // Use funct field for ALU control
+                ALUOp = 2'b10;      // Use funct field for ALU control
                 ALUSrc = 1'b0;      // Use register for ALU input B
                 RegWrite = 1'b1;    // Enable register write
-                // MEM stage signals default to 0
             end
             
             // I-type arithmetic (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
             7'b0010011: begin
-                ALUOp = 2'b00;     // Addition for immediate
+                ALUOp = 2'b11;      // I-type ALU operations
                 ALUSrc = 1'b1;      // Use immediate for ALU input B
                 RegWrite = 1'b1;    // Enable register write
             end
             
             // Load instructions (lw, lh, lb, lhu, lbu)
             7'b0000011: begin
-                ALUOp = 2'b00;     // Addition for address calculation
+                ALUOp = 2'b00;      // Addition for address calculation
                 ALUSrc = 1'b1;      // Use immediate for address offset
                 MemRead = 1'b1;     // Enable memory read
                 RegWrite = 1'b1;    // Enable register write
@@ -54,25 +55,23 @@ module control_unit (
             
             // Store instructions (sw, sh, sb)
             7'b0100011: begin
-                ALUOp = 2'b00;     // Addition for address calculation
+                ALUOp = 2'b00;      // Addition for address calculation
                 ALUSrc = 1'b1;      // Use immediate for address offset
                 MemWrite = 1'b1;    // Enable memory write
             end
             
             // Branch instructions (beq, bne, blt, bge, bltu, bgeu)
             7'b1100011: begin
-                ALUOp = 2'b01;     // Subtraction for comparison
+                ALUOp = 2'b01;      // Subtraction/comparison for branch
                 ALUSrc = 1'b0;      // Use register for comparison
                 Branch = 1'b1;      // This is a branch instruction
             end
             
-             // LUI (Load Upper Immediate)
+            // LUI (Load Upper Immediate)
             7'b0110111: begin
-                ALUOp = 2'b00;      // CORREÇÃO: usar ADD em vez de 11
+                ALUOp = 2'b11;      // Special LUI operation
                 ALUSrc = 1'b1;      // Use immediate
                 RegWrite = 1'b1;    // Enable register write
-                // Para LUI, queremos que ALU faça: 0 + immediate
-                // onde immediate já vem com os 12 bits inferiores zerados
             end
             
             // AUIPC (Add Upper Immediate to PC)
@@ -80,28 +79,24 @@ module control_unit (
                 ALUOp = 2'b00;      // Addition: PC + immediate
                 ALUSrc = 1'b1;      // Use immediate
                 RegWrite = 1'b1;    // Enable register write
-                /* NOTA: Para AUIPC, seria necessário um mux adicional 
-                para selecionar PC em vez de rs1 como entrada A da ALU.
-                Por simplicidade, pode ser implementado posteriormente. */
             end
             
             // JAL (Jump and Link)
             7'b1101111: begin
-                ALUOp = 2'b00;     // Addition for PC+4
-                ALUSrc = 1'b1;      // Use immediate for jump target
+                ALUOp = 2'b00;      // Addition for PC+4
                 RegWrite = 1'b1;    // Enable register write (PC+4 to rd)
-                Branch = 1'b1;      // Treated as unconditional branch
+                Jump = 1'b1;        // This is a jump instruction
             end
             
             // JALR (Jump and Link Register)
             7'b1100111: begin
-                ALUOp = 2'b00;     // Addition
+                ALUOp = 2'b00;      // Addition
                 ALUSrc = 1'b1;      // Use immediate
                 RegWrite = 1'b1;    // Enable register write (PC+4 to rd)
-                Branch = 1'b1;      // Treated as unconditional branch
+                Jump = 1'b1;        // This is a jump instruction
             end
             
-            // Default case (including FENCE, ECALL, EBREAK, etc.)
+            // Default case
             default: begin
                 // All signals default to 0
             end

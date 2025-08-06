@@ -5,132 +5,131 @@ module tb_rv32i_cpu();
     // Parâmetros
     parameter INSTR_WIDTH = 32;
     parameter INSTR_HEIGHT = 256;
-    parameter CLK_PERIOD = 10; // 10ns = 100MHz
-
+    parameter DATA_HEIGHT = 1024;
+    parameter REG_COUNT = 32;
+    
     // Sinais de clock e reset
     reg clk;
     reg rst;
-
-    // Sinais de controle
-    reg stall;
-    reg flush;
-
-    // Instância da CPU
+    
+    // Sinais de debug
+    wire [31:0] pc_current;
+    wire [INSTR_WIDTH-1:0] current_instruction;
+    reg [4:0] debug_reg_index;
+    wire [31:0] debug_reg_value;
+    reg [9:0] debug_mem_index;
+    wire [31:0] debug_mem_value;
+    
+    // Instância do CPU
     rv32i_cpu #(
         .INSTR_WIDTH(INSTR_WIDTH),
         .INSTR_HEIGHT(INSTR_HEIGHT),
-        .INSTR_INIT_FILE("program.mem") // Arquivo com instruções de teste
-    ) uut (
+        .INSTR_INIT_FILE("compiler/program.hex"),
+        .DATA_HEIGHT(DATA_HEIGHT),
+        .REG_COUNT(REG_COUNT)
+    ) cpu (
         .clk(clk),
         .rst(rst),
-        .stall(stall),
-        .flush(flush),
-        .debug_reg_index(5'b0) // Não usado neste teste
+        .pc_current(pc_current),
+        .current_instruction(current_instruction),
+        .debug_reg_index(debug_reg_index),
+        .debug_reg_value(debug_reg_value),
+        .debug_mem_index(debug_mem_index),
+        .debug_mem_value(debug_mem_value)
     );
-
-    // Geração de clock
-    always #(CLK_PERIOD/2) clk = ~clk;
-
-    // Tarefa para exibir a memória de instruções
-    task display_instruction_memory;
-        integer i;
-        begin
-            $display("\n=== Memória de Instruções ===");
-            $display("Endereço   Instrução");
-            for (i = 0; i < INSTR_HEIGHT; i = i + 1) begin
-                if (uut.instr_memory_debug[i] != 0) begin
-                    $display("0x%08h: 0x%08h", i*4, uut.instr_memory_debug[i]);
-                end
-            end
-        end
-    endtask
-
-    // Tarefa para exibir o estado da pipeline
-    task display_pipeline_state;
-        integer cycle;
-        begin
-            cycle = $time/CLK_PERIOD;
-            $display("\n=== Ciclo %0d ===", cycle);
-            $display("PC atual: 0x%08h", uut.pc_current);
-            $display("IF: Instrução = 0x%08h", uut.current_instruction);
-            
-            // Estágio IF/ID
-            if (cycle > 0) begin
-                $display("\nIF/ID:");
-                $display("PC: 0x%08h", uut.if_id_pc);
-                $display("Instrução: 0x%08h", uut.if_id_instr);
-            end
-            
-            // Estágio ID/EX
-            if (cycle > 1) begin
-                $display("\nID/EX:");
-                $display("PC: 0x%08h", uut.idex_pc);
-                $display("RS1: x%0d = 0x%08h", uut.idex_rs1, uut.idex_rs1_data);
-                $display("RS2: x%0d = 0x%08h", uut.idex_rs2, uut.idex_rs2_data);
-                $display("Imediato: 0x%08h", uut.idex_imm_data);
-                $display("RD: x%0d", uut.idex_rd);
-                $display("ALUOp: %b, ALUSrc: %b", uut.idex_ALUOp, uut.idex_ALUSrc);
-            end
-            
-            // Estágio EX (ALU)
-            if (cycle > 2) begin
-                $display("\nEX:");
-                $display("Entrada A: 0x%08h", uut.forward_mux1_out);
-                $display("Entrada B: 0x%08h", uut.alu_src_mux_out);
-                $display("Operação ALU: %b", uut.alu_control_out);
-                $display("Resultado ALU: 0x%08h", uut.alu_result);
-                $display("Zero Flag: %b", uut.alu_zero);
-                $display("Branch Target: 0x%08h", uut.branch_target);
-            end
-        end
-    endtask
-
-    // Tarefa para exibir registradores
-    task display_registers;
-        integer i;
-        begin
-            $display("\n=== Estado dos Registradores ===");
-            $display("x0: 0x%08h (hardwired zero)", uut.registers_debug[0]);
-            for (i = 1; i < 32; i = i + 1) begin
-                if (uut.registers_debug[i] != 0) begin
-                    $display("x%0d: 0x%08h", i, uut.registers_debug[i]);
-                end
-            end
-        end
-    endtask
-
-    // Inicialização
+    
+    // Gerador de clock
     initial begin
-        // Inicializa arquivo de log
-        $dumpfile("cpu_waveform.vcd");
-        $dumpvars(0, tb_rv32i_cpu);
-        
-        // Inicializa sinais
         clk = 0;
+        forever #5 clk = ~clk;
+    end
+    
+    // Tarefa para mostrar o conteúdo da memória
+    task show_memory;
+        input [9:0] start_addr;
+        input [9:0] end_addr;
+        input is_instr_mem;
+        integer i;
+    begin
+        if (is_instr_mem) begin
+            $display("\nConteúdo da Memória de Instruções [%0d:%0d]:", start_addr, end_addr);
+            for (i = start_addr; i <= end_addr; i = i + 1) begin
+                #1; // Espera um tempo para o valor ser atualizado
+                $display("Mem[%0d] = %h", i, cpu.instr_mem.memory[i]);
+            end
+        end else begin
+            $display("\nConteúdo da Memória de Dados [%0d:%0d]:", start_addr, end_addr);
+            for (i = start_addr; i <= end_addr; i = i + 1) begin
+                #1; // Espera um tempo para o valor ser atualizado
+                $display("Data[%0d] = %h", i, cpu.data_mem.memory[i]);
+            end
+        end
+    end
+    endtask
+    
+    // Tarefa para mostrar os registradores
+    task show_registers;
+        input [4:0] start_reg;
+        input [4:0] end_reg;
+        integer i;
+    begin
+        $display("\nConteúdo dos Registradores [x%0d:x%0d]:", start_reg, end_reg);
+        for (i = start_reg; i <= end_reg; i = i + 1) begin
+            debug_reg_index = i;
+            #1; // Espera um tempo para o valor ser atualizado
+            $display("x%0d = %h", i, debug_reg_value);
+        end
+    end
+    endtask
+    
+    // Tarefa para mostrar o estado do pipeline
+    task show_pipeline_state;
+        input [31:0] cycle;
+    begin
+        $display("\n=== Ciclo %0d ===", cycle);
+        $display("PC: %h", pc_current);
+        $display("Instrução: %h", current_instruction);
+        // Aqui você pode adicionar mais informações sobre o estado do pipeline
+        // como os valores nos registradores intermediários, sinais de controle, etc.
+    end
+    endtask
+    
+    // Procedimento de teste
+    initial begin
+        // Inicialização
         rst = 1;
-        stall = 0;
-        flush = 0;
+        debug_reg_index = 0;
+        debug_mem_index = 0;
         
-        // Reset inicial
-        #(CLK_PERIOD*2);
+        // Mostra memória de instruções inicial
+        $display("=== TESTBENCH PARA RV32I CPU ===");
+        show_memory(0, 15, 1); // Mostra 16 primeiras posições da memória de instruções
+        
+        // Reset
+        #10;
         rst = 0;
         
-        // Exibe memória de instruções
-        display_instruction_memory();
-        
-        // Executa por 15 ciclos
-        $display("\nIniciando execução...");
-        repeat (15) begin
-            #CLK_PERIOD;
-            display_pipeline_state();
+        // Execução por 16 ciclos
+        for (integer i = 0; i < 16; i = i + 1) begin
+            show_pipeline_state(i);
+            #10; // Avança um ciclo de clock
         end
         
-        // Exibe estado final dos registradores
-        display_registers();
+        // Mostra estado final
+        $display("\n=== ESTADO FINAL APÓS 16 CICLOS ===");
+        show_registers(0, 31); // Mostra todos os registradores
+        show_memory(0, 15, 0); // Mostra 16 primeiras posições da memória de dados
         
-        // Finaliza
-        $display("\n=== Final da Simulação ===");
+        // Finaliza a simulação
         $finish;
+    end
+    
+    // Monitoramento de eventos importantes
+    always @(posedge clk) begin
+        if (cpu.branch_flush) begin
+            $display("-> Branch tomado no ciclo %0d! PC atual: %h, Novo PC: %h", 
+                    $time/10, pc_current, cpu.pc_next);
+        end
     end
 
 endmodule
