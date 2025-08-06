@@ -11,7 +11,7 @@ module register_file #(
     input wire [4:0]            rs2,
     input wire [4:0]            rd,
     input wire [WIDTH-1:0]      wd,
-    input wire                  reg_write,
+    input wire                  rw,
 
     output wire [WIDTH-1:0]     read_data_1,
     output wire [WIDTH-1:0]     read_data_2,
@@ -31,7 +31,7 @@ module register_file #(
                 regs[i] <= 0;
             end
         end
-        else if (reg_write && rd != 5'd0) begin
+        else if (rw && rd != 5'd0) begin
             regs[rd] <= wd;
         end
     end

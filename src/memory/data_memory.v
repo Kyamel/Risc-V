@@ -1,76 +1,53 @@
 `timescale 1ns / 1ps
 
 module data_memory #(
-    parameter DEPTH = 1024,         // Tamanho padrão: 1024 palavras (4 KB)
-    parameter INIT_FILE = "compiler/data.hex"        // Arquivo de inicialização (opcional)
+    parameter WIDTH = 32,               // Largura de cada palavra (em bits)
+    parameter DEPTH = 1024,             // Número de posições de memória
+    parameter INIT_FILE = "none"        // Arquivo de inicialização (opcional)
 ) (
-    input wire clk,
-    input wire reset,
-
-    // Interface do Estágio MEM
-    input wire [31:0] addr,
-    input wire [31:0] data_in,
-    output reg [31:0] data_out,
-    input wire read_en,
-    input wire write_en,
-    input wire [3:0] byte_enable,   // Suporte a LB/LH/LW/SB/SH/SW
-
-    // Debug
-    input wire [31:0] debug_addr,
-    output wire [31:0] debug_data_out
+    input wire clk,                     // Sinal de clock
+    
+    input wire [WIDTH-1:0] mem_addr,    // Endereço de memória (vindo da ALU)
+    input wire [WIDTH-1:0] write_data,  // Dado para escrita
+    input wire mem_write,               // Sinal de escrita
+    input wire mem_read,                // Sinal de leitura
+    output reg [WIDTH-1:0] read_data    // Dado lido
 );
 
-    reg [31:0] mem [0:DEPTH-1];
-
-    // Escrita síncrona (com byte_enable)
-    always @(posedge clk) begin
-        if (write_en && addr[31:2] < DEPTH) begin
-            if (byte_enable[0]) mem[addr[31:2]][7:0]   <= data_in[7:0];
-            if (byte_enable[1]) mem[addr[31:2]][15:8]  <= data_in[15:8];
-            if (byte_enable[2]) mem[addr[31:2]][23:16] <= data_in[23:16];
-            if (byte_enable[3]) mem[addr[31:2]][31:24] <= data_in[31:24];
+    localparam ADDR_WIDTH = $clog2(DEPTH);
+    reg [WIDTH-1:0] memory [0:DEPTH-1];
+    
+    // Inicialização
+    integer i;
+    initial begin
+        // Inicializa toda a memória com zeros
+        for (i = 0; i < DEPTH; i = i + 1) begin
+            memory[i] = 32'h0;
+        end
+        
+        if (INIT_FILE != "none") begin
+            $readmemh(INIT_FILE, memory);
         end
     end
-
-    // Leitura combinatória (assíncrona)
-    reg [31:0] read_data;
+    
+    // CORREÇÃO: Lógica separada para leitura e escrita
+    wire [ADDR_WIDTH-1:0] word_addr = mem_addr[ADDR_WIDTH+1:2]; // Endereço de palavra
+    
+    // Leitura combinacional (para compatibilidade com pipeline)
     always @(*) begin
-        if (addr[31:2] < DEPTH)
-            read_data = mem[addr[31:2]];
-        else
-            read_data = 32'h00000000;  // Endereço inválido
+        if (mem_read) begin
+            read_data = memory[word_addr];
+        end else begin
+            read_data = 32'h0;
+        end
     end
-
-    // Extensão de sinal para LB/LH
-    always @(*) begin
-        if (reset)
-            data_out = 32'h0;
-        else if (read_en) begin
-            case (byte_enable)
-                4'b0001: data_out = {{24{read_data[7]}},  read_data[7:0]};      // LB
-                4'b0010: data_out = {{24{read_data[15]}}, read_data[15:8]};     // LB
-                4'b0100: data_out = {{24{read_data[23]}}, read_data[23:16]};    // LB
-                4'b1000: data_out = {{24{read_data[31]}}, read_data[31:24]};    // LB
-                4'b0011: data_out = {{16{read_data[15]}}, read_data[15:0]};     // LH
-                4'b1100: data_out = {{16{read_data[31]}}, read_data[31:16]};    // LH
-                default: data_out = read_data;                                  // LW
-            endcase
-        end else
-            data_out = 32'h0;
-    end
-
-    // Debug (leitura assíncrona)
-    assign debug_data_out = (debug_addr[31:2] < DEPTH) ? mem[debug_addr[31:2]] : 32'h0;
-
-    // Inicialização da memória
-    initial begin
-        // Preenche com zeros
-        for (integer i = 0; i < DEPTH; i = i + 1)
-            mem[i] = 32'h00000000;
-
-        // Carrega conteúdo do arquivo (se especificado)
-        if (INIT_FILE != "")
-            $readmemh(INIT_FILE, mem);
+    
+    // Escrita síncrona
+    always @(posedge clk) begin
+        if (mem_write) begin
+            memory[word_addr] <= write_data;
+            $display("MEM WRITE: addr=0x%08h, data=0x%08h", mem_addr, write_data);
+        end
     end
 
 endmodule

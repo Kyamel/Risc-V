@@ -18,10 +18,9 @@ module alu_control (
 );
 
 
-
 always @(*) begin
     case (ALUOp)
-        2'b00: Op = `ALU_ADD;  // Loads/Stores/Jumps
+        2'b00: Op = `ALU_ADD;  // Loads/Stores/AUIPC
         
         2'b01: begin      // Branches
             case (Funct[2:0])
@@ -32,7 +31,7 @@ always @(*) begin
             endcase
         end
         
-        2'b10, 2'b11: begin  // R-type e I-type
+        2'b10: begin  // R-type
             case (Funct[2:0])
                 3'b000: Op = (Funct[9]) ? `ALU_SUB : `ALU_ADD;
                 3'b001: Op = `ALU_SLL;
@@ -46,7 +45,22 @@ always @(*) begin
             endcase
         end
         
+        2'b11: begin  // I-type e LUI
+            case (Funct[2:0])
+                3'b000: Op = `ALU_ADD;    // ADDI
+                3'b001: Op = `ALU_SLL;    // SLLI
+                3'b010: Op = `ALU_SLT;    // SLTI
+                3'b011: Op = `ALU_SLTU;   // SLTIU
+                3'b100: Op = `ALU_XOR;    // XORI
+                3'b101: Op = (Funct[9]) ? `ALU_SRA : `ALU_SRL; // SRAI/SRLI
+                3'b110: Op = `ALU_OR;     // ORI
+                3'b111: Op = `ALU_AND;    // ANDI
+                default: Op = `ALU_ADD;
+            endcase
+        end
+        
         default: Op = `ALU_ADD;
     endcase
 end
+
 endmodule
