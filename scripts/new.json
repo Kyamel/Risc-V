@@ -13,13 +13,45 @@
             "src/stages/id_ex.v",
             "src/control/alu_control.v",
             "src/components/alu.v",
+
+            "src/stages/ex_mem.v",
+            "src/stages/mem_wb.v",
            
 
             "src/components/register_file.v",
-            "src/memory/instruction_memory.v"
+            "src/memory/instruction_memory.v",
+            "src/memory/data_memory.v",
+            
+            "src/control/hazard_detection.v",
+            "src/control/forwarding_unit.v"
 
         ],
         "tb": "tb/core/tb_rv32i_cpu.v"
+    },
+
+    "rv32i_cpu_no_forward": {
+        "sources": [
+            "src/core/rv32i_cpu_no_forward.v",
+
+            "src/components/pc_generator.v",
+
+            "src/stages/if_id.v",
+            "src/components/instr_parser.v",
+            "src/components/immediate_data_extractor.v",
+            "src/control/control_unit.v",
+
+            "src/stages/id_ex.v",
+            "src/control/alu_control.v",
+            "src/components/alu.v",
+
+            "src/stages/ex_mem.v",
+            "src/stages/mem_wb.v",
+
+            "src/components/register_file.v",
+            "src/memory/instruction_memory.v",
+            "src/memory/data_memory.v"
+        ],
+        "tb": "tb/core/tb_rv32i_cpu_no_forward.v"
     },
 
     "pipeline_to_ex": {
@@ -41,19 +73,6 @@
             "src/memory/instruction_memory.v"
         ],
         "tb": "tb/pipeline/tb_pipeline_to_ex.v"
-    },
-
-    "fetch_and_decode": {
-        "sources": [
-            "src/memory/instruction_memory.v",
-
-            "src/components/instr_parser.v",
-            "src/components/immediate_data_extractor.v",
-            
-            "src/control/control_unit.v",
-            "src/control/alu_control.v"
-        ],
-        "tb": "tb/pipeline/tb_fetch_and_decode.v"
     },
 
     "if_id": {
@@ -104,6 +123,12 @@
             "src/control/control_unit.v"
         ],
         "tb": "tb/control/tb_control_unit.v"
+    },
+    "data_memory": {
+        "sources": [
+            "src/memory/data_memory.v"
+        ],
+        "tb": "tb/memory/tb_data_memory.v"
     }
 
 }

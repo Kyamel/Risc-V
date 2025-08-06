@@ -84,7 +84,54 @@ module tb_immediate_data_extractor();
         instr = 32'h2bd000ef; // JAL x1, +0xABC
         #10;
         check_imm(32'h00000abc, imm_data, "JAL +0xABC (J-type)");
-        
+
+        $display("\n== Teste Novos ==");
+
+        // ==== Novos testes ====
+
+        instr = 32'h07f00093; // addi x1, x0, 127
+        #10; check_imm(32'h0000007F, imm_data, "ADDI +127");
+
+        instr = 32'hfff10293; // addi x5, x2, -1
+        #10; check_imm(32'hFFFFFFFF, imm_data, "ADDI -1");
+
+        instr = 32'h00000193; // addi x3, x0, 0
+        #10; check_imm(32'h00000000, imm_data, "ADDI 0");
+
+        instr = 32'h00102823; // sw x1, 16(x0)
+        #10; check_imm(32'h00000010, imm_data, "SW +16");
+
+        instr = 32'hfe532e23; // sw x5, -4(x6)
+        #10; check_imm(32'hFFFFFFFC, imm_data, "SW -4");
+
+        instr = 32'h00000013; // nop (add x0, x0, 0) — R-type
+        #10; check_imm(32'h00000000, imm_data, "NOP (sem imediato)");
+
+        instr = 32'h01002383; // lw x7, 16(x0)
+        #10; check_imm(32'h00000010, imm_data, "LW +16");
+
+        instr = 32'h00008463; // beq x1, x0, 8
+        #10; check_imm(32'h00000008, imm_data, "BEQ +8");
+
+        instr = 32'hfe008ee3; // beq x1, x0, -4
+        #10; check_imm(32'hFFFFFFFC, imm_data, "BEQ -4");
+
+        instr = 32'h12345137; // lui x2, 0x12345
+        #10; check_imm(32'h12345000, imm_data, "LUI 0x12345");
+
+        instr = 32'h1100046f; // jal x8, 0x111
+        #10; check_imm(32'h00001110, imm_data, "JAL +0x111");
+
+        instr = 32'h005084b3; // add x9, x1, x5 — R-type
+        #10; check_imm(32'h00000000, imm_data, "ADD x9, x1, x5");
+
+        instr = 32'h0011c533; // xor x10, x3, x1 — R-type
+        #10; check_imm(32'h00000000, imm_data, "XOR x10, x3, x1");
+
+        instr = 32'h003115b3; // sll x11, x2, x3 — R-type
+        #10; check_imm(32'h00000000, imm_data, "SLL x11, x2, x3");
+
+      
         $display("\n=== Fim dos Testes ===");
         $finish;
     end
