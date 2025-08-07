@@ -3,9 +3,9 @@
 
 module rv32i_cpu #(
     parameter INSTR_WIDTH = 32,
-    parameter INSTR_DEPTH = 256,
+    parameter INSTR_DEPTH = 1014,
     parameter INSTR_INIT_FILE = "compiler/program.hex",
-    parameter DATA_HEIGHT = 1024,
+    parameter DATA_DEPTH = 1024,
     parameter DATA_INIT_FILE = "none",
     parameter REG_COUNT = 32
 )(
@@ -115,6 +115,8 @@ reg wb_write_data [31:0]; // Dado a ser escrito no registrador MEM/WB
 reg read_data_1 [31:0]; // Dado lido do registrador 1
 reg read_data_2 [31:0]; // Dado lido do registrador 2
 
+reg write_data_mux;  // WB MUX
+reg mem_wb_rd [4:0]; // Registrador de destino do estágio MEM/WB
 register_file #(
     .WIDTH(32),
     .DEPTH(REG_COUNT)
@@ -124,9 +126,9 @@ register_file #(
 
     .rs1(rs1),
     .rs2(rs2),
-    .rd(wb_rd), // TODO: Implementar controle de escrita
-    .wd(wb_write_data), // TODO: Implementar controle de escrita
-    .rw(reg_write), // TODO: Implementar controle de escrita
+    .rd(mem_wb_rd), // WB stage
+    .wd(write_data_mux), // WB stage
+    .rw(reg_write),  // AND from MEM stage
 
     .read_data_1(read_data_1),
     .read_data_2(read_data_2)
@@ -258,7 +260,6 @@ reg forward_b [1:0];
 // TODO: ex_mem e wb_mem dependencies
 reg ex_mem_result [31:0]; // Resultado da ULA no estágio EX/MEM
 reg ex_mem_rd [4:0]; // Registrador de destino do estágio EX/MEM
-reg mem_wb_rd [4:0]; // Registrador de destino do estágio MEM/WB
 reg ex_mem_MemWrite; // Sinal de escrita no estágio EX/MEM
 reg id_ex_MemWrite; // Sinal de escrita no estágio ID/EX
 
@@ -343,7 +344,22 @@ alu alu (
 // Stage 4
 // =======================
 
-reg ex_mem_result [31:0];
+reg ex_mem_alu_result [31:0];
+reg ex_mem_alu_zero;
+reg ex_mem_write_data [31:0];
+reg ex_mem_rd;
+reg ex_mem_adder_out [31:0];
+
+reg ex_mem_Branch;
+reg ex_mem_Jump;
+reg ex_mem_MemRead;
+reg ex_mem_MemWrite;
+reg ex_mem_RegWrite;
+reg ex_mem_MemtoReg;
+
+// -----------------------
+// EX/MEM Pipeline Register
+// -----------------------
 
 ex_mem ex_mem_reg (
     .clk(clk),
@@ -367,24 +383,77 @@ ex_mem ex_mem_reg (
     .ex_read_data_2_mux(forward_mux_b),
 
     // Saídas para o estágio MEM
-    .mem_addr(),
-    .mem
-
-);
-    // Saídas para o estágio MEM
-    output reg [31:0]  mem_addr,           // Endereço para memória de dados (ALU Result)
-    output reg        mem_alu_zero, 
-    output reg [31:0]  mem_write_data,     // Dado para escrita na memória
-    output reg [4:0]   mem_rd,             // Registrador destino (para WB e forwarding)
-    output reg [31:0]  mem_adder_out,      // PC + offset (para cálculo de branch)
-    
+    .mem_addr(ex_mem_alu_result),
+    .mem_alu_zero(ex_mem_alu_zero),
+    .mem_write_data(ex_mem_write_data),
+    .mem_rd(ex_mem_rd),
+    .mem_adder_out(ex_mem_adder_out),
     // Control signals to MEM stage
-    output reg        mem_Branch,          // Branch control to MEM stage
-    output reg        mem_Jump,
-    output reg        mem_MemRead,         // Memory read control to MEM stage
-    output reg        mem_MemWrite,        // Memory write control to MEM stage
-    
+    .mem_Branch(ex_mem_Branch),
+    .mem_Jump(ex_mem_Jump),
+    .mem_MemRead(ex_mem_MemRead),
+    .mem_MemWrite(ex_mem_MemWrite),
     // Control signals to WB stage (passed through MEM stage)
-    output reg        mem_RegWrite,        // Register write control to WB stage
-    output reg        mem_MemtoReg         // Memory-to-register mux control to WB stage
+    .mem_RegWrite(ex_mem_RegWrite),
+    .mem_MemtoReg(ex_mem_MemtoReg)
 );
+
+// AND for RegWrite control
+assign reg_write = ex_mem_alu_zero & ex_mem_RegWrite;
+
+// -----------------------
+// Data Memory
+// -----------------------
+
+reg mem_read_data [31:0];
+data_memory #(
+    .WIDTH(32),
+    .DEPTH(DATA_DEPTH),
+    .INIT_FILE(DATA_INIT_FILE)
+) data_memory (
+    .clk(clk),
+
+    .mem_addr(ex_mem_alu_result),
+    .write_data(ex_mem_write_data),
+    .mem_write(ex_mem_MemWrite),
+    .mem_read(ex_mem_MemRead),
+
+    .read_data(mem_read_data)
+);
+
+// =======================
+// Stage 5
+// =======================
+
+
+// -----------------------
+// MEM/WB pipeline stage
+// -----------------------
+
+reg mem_wb_read_data [31:0];
+reg mem_wb_result [31:0];
+reg mem_wb_rd [4:0];
+reg mem_wb_RegWrite;
+reg mem_wb_MemtoTeg;
+
+mem_wb mem_wb_reg (
+    .clk(clk),
+    .rst(rst),
+    .stall(1'b0), // TODO
+    .flush(1'b0), // TODO
+
+    .mem_read_data(mem_read_data),
+    .mem_result(ex_mem_alu_result),
+    .mem_rd(ex_mem_rd),
+    .mem_RegWrite(ex_mem_RegWrite),
+    .mem_MemtoReg(ex_mem_MemtoReg),
+
+    .wb_read_data(mem_wb_read_data),
+    .wb_result(mem_wb_result),
+    .wb_rd(mem_wb_rd),
+    .wb_RegWrite(mem_wb_RegWrite),
+    .wb_MemtoReg(mem_wb_MemtoTeg)
+);
+
+// WB MUX
+assign write_data_mux = (mem_wb_RegWrite) ? mem_wb_read_data : ex_mem_alu_result;
