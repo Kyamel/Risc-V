@@ -1,13 +1,11 @@
-addi x5, x0, 0 # endereço base da memória   
-addi  x6, x0, 4       
-addi  x7, x0, 0          
-addi  x8, x0, 3          
-
-# loop sem rótulo - usamos offsets relativos
-sw    x6, 0(x5)          
-addi  x6, x6, 1          
-addi  x5, x5, 4          
-addi  x7, x7, 1          
-#bne   x7, x8, -9         
-
-addi  x1, x0, 1          # fim
+addi x1, x0, 1  ; x1 = 1
+sw x1, 0(x0)    ; armazena 1 em mem[0]
+addi x4, x0, 2  ; x4 = 2
+lw x2, 0(x0)    ; x2 = 1
+sll  x5, x4, x2  ; x5 = 2 << 1 = 4
+xor  x6, x5, x4 ; x6 = 6
+sw   x4, 4(x0)
+sw   x5, 8(x0)
+lw   x7, 4(x0)  ; x7 = 2
+lw   x8, 8(x0)  ; x8 = 4
+add x9, x7, x8 ; x9 = 6

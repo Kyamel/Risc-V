@@ -31,8 +31,8 @@ module data_memory #(
     end
     
     // CORREÇÃO: Lógica separada para leitura e escrita
-    wire [ADDR_WIDTH-1:0] word_addr = mem_addr[ADDR_WIDTH+1:2]; // Endereço de palavra
-    
+    wire [ADDR_WIDTH-1:0] word_addr = mem_addr[$clog2(DEPTH)+1:2]; // Endereço de palavra
+
     // Leitura combinacional (para compatibilidade com pipeline)
     always @(*) begin
         if (mem_read) begin

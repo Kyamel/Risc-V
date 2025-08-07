@@ -14,11 +14,14 @@ module id_ex (
     input wire [4:0] id_rs1,             // Endereço do registrador rs1
     input wire [4:0] id_rs2,             // Endereço do registrador rs2
     input wire [4:0] id_rd,              // Endereço do registrador rd
+    input wire [2:0] id_funct3,          // Função 3 da instrução
+    input wire [6:0] id_funct7,          // Função 7 da instrução
 
     // Sinais de controle da control_unit
     input wire id_ALUSrc,                // Controle do mux da ULA
     input wire [1:0] id_ALUOp,           // Controle da operação da ULA
     input wire id_Branch,                // Sinal de branch
+    input wire id_Jump,                  // Sinal de jump (JAL/JALR)
     input wire id_MemRead,               // Sinal de leitura de memória
     input wire id_MemWrite,              // Sinal de escrita em memória
     input wire id_RegWrite,              // Sinal de escrita no banco de registradores
@@ -32,11 +35,14 @@ module id_ex (
     output reg [4:0] ex_rs1,             // Endereço rs1 (para forwarding)
     output reg [4:0] ex_rs2,             // Endereço rs2 (para forwarding)
     output reg [4:0] ex_rd,              // Endereço rd (para WB)
+    output reg [2:0] ex_funct3,          // Função 3 da instrução
+    output reg [6:0] ex_funct7,          // Função 7 da instrução
 
     // Sinais de controle para os estágios EX/MEM/WB
     output reg ex_ALUSrc,                // Sinal de controle ALUSrc
     output reg [1:0] ex_ALUOp,           // Sinal de controle ALUOp
     output reg ex_Branch,                // Para estágio MEM (controle de branch)
+    output reg ex_Jump,                  // Para estágio MEM (controle de jump)
     output reg ex_MemRead,               // Para estágio MEM (leitura de memória)
     output reg ex_MemWrite,              // Para estágio MEM (escrita em memória)
     output reg ex_RegWrite,              // Para estágio WB (escrita em registrador)
@@ -53,11 +59,14 @@ module id_ex (
             ex_rs1 <= 5'b0;
             ex_rs2 <= 5'b0;
             ex_rd <= 5'b0;
-            
+            ex_funct3 <= 3'b0;
+            ex_funct7 <= 7'b0;
+
             // Zera todos os sinais de controle
             ex_ALUSrc <= 1'b0;
             ex_ALUOp <= 2'b0;
             ex_Branch <= 1'b0;
+            ex_Jump <= 1'b0;
             ex_MemRead <= 1'b0;
             ex_MemWrite <= 1'b0;
             ex_RegWrite <= 1'b0;
@@ -72,11 +81,14 @@ module id_ex (
             ex_rs1 <= id_rs1;
             ex_rs2 <= id_rs2;
             ex_rd <= id_rd;
-            
+            ex_funct3 <= id_funct3;
+            ex_funct7 <= id_funct7;
+
             // Passa os sinais de controle
             ex_ALUSrc <= id_ALUSrc;
             ex_ALUOp <= id_ALUOp;
             ex_Branch <= id_Branch;
+            ex_Jump <= id_Jump;
             ex_MemRead <= id_MemRead;
             ex_MemWrite <= id_MemWrite;
             ex_RegWrite <= id_RegWrite;

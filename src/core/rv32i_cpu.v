@@ -183,7 +183,7 @@ module rv32i_cpu #(
     id_ex id_ex_reg (
         .clk(clk),
         .rst(rst),
-        .stall(1'b0), // ID/EX não stalla com hazard detection
+        .stall(hazard_stall), // ID/EX não stalla com hazard detection
         .flush(branch_flush),
         // Dados do ID
         .id_read_data_1(reg_data_1),
@@ -293,8 +293,8 @@ module rv32i_cpu #(
     ex_mem ex_mem_reg (
         .clk(clk),
         .rst(rst),
-        .stall(1'b0),
-        .flush(1'b0),
+        .stall(hazard_stall),
+        .flush(branch_flush),
         // Sinais de controle do EX
         .ex_Branch(ex_Branch),
         .ex_MemRead(ex_MemRead),
@@ -346,27 +346,24 @@ module rv32i_cpu #(
     
     // Debug da memória
     assign debug_mem_value = data_mem.memory[debug_mem_index];
-    
-    // Lógica de branch - usando branch unit
-    wire pc_src, branch_new_pc_valid;
-    wire [31:0] branch_new_pc;
-    
-    // Para simplificar, vou implementar a lógica de branch aqui
-    // Decisão de branch baseada na ALU Zero flag e tipo de branch
-    reg branch_taken;
-    always @(*) begin
-        if (mem_Branch) begin
-            // Para BEQ/BNE, usa diretamente o zero flag
-            // Para outros branches, seria necessário lógica mais complexa
-            branch_taken = mem_alu_zero;
-        end else begin
-            branch_taken = 1'b0;
-        end
-    end
+
+    branch_unit branch_unit (
+        .id_ex_pc(ex_pc),
+        .id_ex_instruction(instruction_id),
+        .id_ex_rs1_data(forward_data_1),
+        .id_ex_rs2_data(forward_data_2),
+        .id_ex_immediate(ex_imm_data),
+        .id_ex_control_signals({mem_Branch, mem_Jump, mem_MemRead, mem_MemWrite, mem_RegWrite, mem_MemtoReg}),
+        
+        .pc_src(branch_taken_decision),
+        .new_pc(mem_branch_target),
+        .flush(branch_flush)
+    );
     
     // Seleção do próximo PC
-    assign pc_next = branch_taken ? mem_branch_target : pc_plus_4;
-    assign branch_flush = branch_taken; // Flush pipeline se branch taken
+    assign pc_next = branch_taken_decision ? mem_branch_target : pc_plus_4;
+    assign branch_flush = branch_taken_decision;
+
     
     // ========================================================================
     // MEM/WB PIPELINE REGISTER
@@ -378,8 +375,8 @@ module rv32i_cpu #(
     mem_wb mem_wb_reg (
         .clk(clk),
         .rst(rst),
-        .stall(1'b0),
-        .flush(1'b0),
+        .stall(hazard_stall),
+        .flush(branch_flush),
         // Dados do MEM
         .mem_read_data(mem_read_data),
         .mem_result(mem_addr),
