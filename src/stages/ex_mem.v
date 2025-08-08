@@ -25,7 +25,7 @@ module ex_mem (
     
     // Saídas para o estágio MEM
     output reg [31:0]  mem_addr,           // Endereço para memória de dados (ALU Result)
-    output reg        mem_alu_zero, 
+    output reg         mem_alu_zero, 
     output reg [31:0]  mem_write_data,     // Dado para escrita na memória
     output reg [4:0]   mem_rd,             // Registrador destino (para WB e forwarding)
     output reg [31:0]  mem_adder_out,      // PC + offset (para cálculo de branch)

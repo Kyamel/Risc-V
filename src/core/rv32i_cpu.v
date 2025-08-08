@@ -16,7 +16,7 @@ module rv32i_cpu #(
     output wire [31:0] pc_current,
     output wire [INSTR_WIDTH-1:0] current_instruction,
     
-    // Debug dos registradores
+    // Debug dos registrwadores
     input wire [4:0] debug_reg_index,
     output wire [31:0] debug_reg_value,
     

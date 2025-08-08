@@ -10,7 +10,7 @@ module rv32i_cpu #(
     parameter REG_COUNT = 32
 )(
     input wire clk,
-    input wire rst,
+    input wire rst
 );
 
 // =======================
@@ -21,8 +21,8 @@ module rv32i_cpu #(
 // PC
 // -----------------------
 
-reg pc_next [31:0]; // Program Counter
-reg pc_out [31:0]; // Output PC
+reg [31:0] pc_next = 0; // Program Counter
+reg [31:0] pc_out ; // Output PC
 
 pc_generator pc_gen (
     .clk(clk),
@@ -31,24 +31,25 @@ pc_generator pc_gen (
     .pc_out(pc_out)
 );
 
-reg pc_plus_4 [31:0]; // PC + 4
+reg pc_branch_taken;
+reg [31:0] pc_plus_4; // PC + 4
 assign pc_plus_4 = pc_out + 4;
-reg pc_mux [31:0]; // MUX para o próximo PC
-reg ex_mem_adder_out [31:0]; // Resultado do adder no estágio EX/MEM
-assign pc_mux = (branch_taken) ? ex_mem_adder_out : pc_plus_4;
+reg [31:0] pc_mux ; // MUX para o próximo PC
+reg [31:0] ex_mem_adder_out; // Resultado do adder no estágio EX/MEM
+assign pc_mux = (pc_branch_taken) ? ex_mem_adder_out : pc_plus_4;
 
 // -----------------------
 // Instruction Memory
 // -----------------------
 
-reg instruction [INSTR_WIDTH-1:0]; // Instrução buscada
+reg [INSTR_WIDTH-1:0] instruction; // Instrução buscada
 instruction_memory #(
     .WIDTH(INSTR_WIDTH),
     .DEPTH(INSTR_DEPTH),
     .INIT_FILE(INSTR_INIT_FILE)
 ) instr_mem (
     .instr_addr(pc_out),
-    .inst(instruction)
+    .instr(instruction)
 );
 
 // =======================
@@ -59,8 +60,8 @@ instruction_memory #(
 // IF/ID Pipeline Register
 // -----------------------
 
-reg id_pc [31:0]; // PC passado para o ID/EX
-reg id_instr [INSTR_WIDTH-1:0]; // Instrução passada para o Intruction Parser
+reg [31:0] id_pc; // PC passado para o ID/EX
+reg [INSTR_WIDTH-1:0] id_instr; // Instrução passada para o Intruction Parser
 
 if_id if_id_reg (
     .clk(clk),
@@ -97,9 +98,9 @@ instr_parser instr_parse (
 // Immediate Data Extractor
 // ------------------------
 
-reg [11:0] imm_data; // Valor imediato extraído
+reg [31:0] imm_data; // Valor imediato extraído
 
-imm_extractor imm_extract (
+immediate_data_extractor imm_extract (
     .instr(id_instr),
     .imm_data(imm_data)
 );
@@ -108,15 +109,17 @@ imm_extractor imm_extract (
 // Register File
 // -----------------------
 
-reg reg_write; // EX/MEM
-reg wb_rd [4:0]; // Registrador de destino para escrita MEM/WB
-reg wb_write_data [31:0]; // Dado a ser escrito no registrador MEM/WB
+reg [4:0] wb_rd; // Registrador de destino para escrita MEM/WB
+reg [31:0] wb_write_data; // Dado a ser escrito no registrador MEM/WB
 
-reg read_data_1 [31:0]; // Dado lido do registrador 1
-reg read_data_2 [31:0]; // Dado lido do registrador 2
+reg [31:0] read_data_1; // Dado lido do registrador 1
+reg [31:0] read_data_2; // Dado lido do registrador 2
 
-reg write_data_mux;  // WB MUX
-reg mem_wb_rd [4:0]; // Registrador de destino do estágio MEM/WB
+reg [31:0] write_data_mux;  // WB MUX
+reg [4:0] mem_wb_rd; // Registrador de destino do estágio MEM/WB
+
+reg mem_wb_RegWrite; // Sinal de escrita no estágio ID/EX
+
 register_file #(
     .WIDTH(32),
     .DEPTH(REG_COUNT)
@@ -128,7 +131,7 @@ register_file #(
     .rs2(rs2),
     .rd(mem_wb_rd), // WB stage
     .wd(write_data_mux), // WB stage
-    .rw(reg_write),  // AND from MEM stage
+    .rw(mem_wb_RegWrite),  // AND from MEM stage
 
     .read_data_1(read_data_1),
     .read_data_2(read_data_2)
@@ -174,15 +177,15 @@ control_unit ctrl_unit (
 // ID/EX Pipeline Register
 // -----------------------
 
-reg id_ex_read_data_1 [31:0]; // Dado lido do registrador 1
-reg id_ex_read_data_2 [31:0]; // Dado lido do registrador 2
-reg id_ex_imm_data [31:0]; // Dado imediato
-reg id_ex_pc [31:0]; // PC atual
-reg id_ex_rs1 [4:0]; // Endereço do registrador rs1
-reg id_ex_rs2 [4:0]; // Endereço do registrador rs2
-reg id_ex_rd [4:0]; // Endereço do registrador rd
-reg id_ex_funct3 [2:0]; // Função 3 da instrução
-reg id_ex_funct7 [6:0]; // Função 7 da instrução
+reg [31:0] id_ex_read_data_1; // Dado lido do registrador 1
+reg [31:0] id_ex_read_data_2; // Dado lido do registrador 2
+reg [31:0] id_ex_imm_data; // Dado imediato
+reg [31:0] id_ex_pc; // PC atual
+reg [4:0] id_ex_rs1; // Endereço do registrador rs1
+reg [4:0] id_ex_rs2; // Endereço do registrador rs2
+reg [4:0] id_ex_rd; // Endereço do registrador rd
+reg [2:0] id_ex_funct3; // Função 3 da instrução
+reg [6:0] id_ex_funct7; // Função 7 da instrução
 
 reg id_ex_ALUSrc; // Controle do mux da ULA
 reg [1:0] id_ex_ALUOp; // Controle da operação da ULA
@@ -203,7 +206,7 @@ id_ex id_ex_reg (
     .id_read_data_1(read_data_1),
     .id_read_data_2(read_data_2),
     .id_imm_data(imm_data),
-    .id_pc(id_pc),
+    .id_pc_out(id_pc),
     .id_rs1(rs1),
     .id_rs2(rs2),
     .id_rd(rd),
@@ -224,7 +227,7 @@ id_ex id_ex_reg (
     .ex_read_data_1(id_ex_read_data_1),
     .ex_read_data_2(id_ex_read_data_2),
     .ex_imm_data(id_ex_imm_data),
-    .ex_pc(id_ex_pc),
+    .ex_pc_out(id_ex_pc),
     .ex_rs1(id_ex_rs1),
     .ex_rs2(id_ex_rs2),
     .ex_rd(id_ex_rd),
@@ -247,21 +250,24 @@ id_ex id_ex_reg (
 // -----------------------
 
 // branch PC
-reg shift_imm_data [31:0]; // Dado imediato shiftado
+reg [31:0] shift_imm_data; // Dado imediato shiftado
 assign shift_imm_data = id_ex_imm_data << 1; // Shift left para branch
-reg branch_adder [31:0]; // Resultado do adder para branch
+reg [31:0] branch_adder; // Resultado do adder para branch
 assign branch_adder = id_ex_pc + shift_imm_data; // PC + imediato shiftado
 // -------------
 
 // Forwarding Unit
 // Detecta dependências de dados entre os estágios EX e MEM/WB
-reg forward_a [1:0];
-reg forward_b [1:0];
+reg [1:0] forward_a;
+reg [1:0] forward_b;
 // TODO: ex_mem e wb_mem dependencies
-reg ex_mem_result [31:0]; // Resultado da ULA no estágio EX/MEM
-reg ex_mem_rd [4:0]; // Registrador de destino do estágio EX/MEM
+reg [31:0] ex_mem_result; // Resultado da ULA no estágio EX/MEM
+reg [4:0] ex_mem_rd; // Registrador de destino do estágio EX/MEM
 reg ex_mem_MemWrite; // Sinal de escrita no estágio EX/MEM
-reg id_ex_MemWrite; // Sinal de escrita no estágio ID/EX
+
+
+// MEM/WB
+reg mem_wb_MemtoReg;
 
 forwarding_unit forward_unit (
     .EX_rs1(id_ex_rs1),
@@ -269,7 +275,7 @@ forwarding_unit forward_unit (
     .MEM_rd(ex_mem_rd), // Registrador de destino do estágio MEM
     .WB_rd(mem_wb_rd), // Registrador de destino do estágio WB
     .MEM_RegWrite(ex_mem_MemWrite), // Sinal de escrita no estágio MEM
-    .WB_RegWrite(id_ex_MemWrite), // Sinal de escrita no estágio WB
+    .WB_RegWrite(mem_wb_RegWrite), // Sinal de escrita no estágio WB
 
     .ForwardA(forward_a),
     .ForwardB(forward_b)
@@ -277,8 +283,8 @@ forwarding_unit forward_unit (
 // -----------------------
 
 // MUX
-reg forward_mux_a [31:0]; // MUX para dado A da ULA
-reg forward_mux_b [31:0]; // MUX para dado B da ULA
+reg [31:0] forward_mux_a; // MUX para dado A da ULA
+reg [31:0] forward_mux_b; // MUX para dado B da ULA
 
 always @(*) begin
     // Forward A (rs1)
@@ -304,8 +310,8 @@ always @(*) begin
 
 end
 
-reg alu_a [31:0]; // Dado A da ULA
-reg alu_b [31:0]; // Dado B da ULA
+reg [31:0] alu_a; // Dado A da ULA
+reg [31:0] alu_b; // Dado B da ULA
 
 assign alu_b = (id_ex_ALUSrc) ? id_ex_imm_data : forward_mux_b; // MUX para dado B da ULA 
 assign alu_a = forward_mux_a;
@@ -315,9 +321,9 @@ assign alu_a = forward_mux_a;
 // ALU Control
 // -----------------------
 
-reg Operation [3:0];
-alu_control alu_control (
-    .ALUOp(ex_ALUOp),
+reg [3:0] Operation;
+alu_control alu_controler (
+    .ALUOp(id_ex_ALUOp),
     .Funct({funct7[6:0], funct3[2:0]}),
 
     .Op(Operation)
@@ -327,9 +333,9 @@ alu_control alu_control (
 // ALU
 // -----------------------
 
-reg alu_result [31:0];
+reg [31:0] alu_result;
 reg alu_zero;
-alu alu (
+alu main_alu (
     .a(alu_a),
     .b(alu_b),
     .ALUOp(Operation),
@@ -344,16 +350,13 @@ alu alu (
 // Stage 4
 // =======================
 
-reg ex_mem_alu_result [31:0];
+reg [31:0] ex_mem_alu_result;
 reg ex_mem_alu_zero;
-reg ex_mem_write_data [31:0];
-reg ex_mem_rd;
-reg ex_mem_adder_out [31:0];
+reg [31:0] ex_mem_write_data;
 
 reg ex_mem_Branch;
 reg ex_mem_Jump;
 reg ex_mem_MemRead;
-reg ex_mem_MemWrite;
 reg ex_mem_RegWrite;
 reg ex_mem_MemtoReg;
 
@@ -378,7 +381,6 @@ ex_mem ex_mem_reg (
     .ex_adder_out(branch_adder),
     .ex_result(alu_result),
     .ex_alu_zero(alu_zero),
-    .ex_write_data(),
     .ex_rd(id_ex_rd),
     .ex_read_data_2_mux(forward_mux_b),
 
@@ -399,18 +401,18 @@ ex_mem ex_mem_reg (
 );
 
 // AND for RegWrite control
-assign reg_write = ex_mem_alu_zero & ex_mem_RegWrite;
+assign pc_branch_taken = ex_mem_alu_zero & ex_mem_RegWrite;
 
 // -----------------------
 // Data Memory
 // -----------------------
 
-reg mem_read_data [31:0];
+reg [31:0] mem_read_data;
 data_memory #(
     .WIDTH(32),
     .DEPTH(DATA_DEPTH),
     .INIT_FILE(DATA_INIT_FILE)
-) data_memory (
+) data_mem (
     .clk(clk),
 
     .mem_addr(ex_mem_alu_result),
@@ -430,11 +432,9 @@ data_memory #(
 // MEM/WB pipeline stage
 // -----------------------
 
-reg mem_wb_read_data [31:0];
-reg mem_wb_result [31:0];
-reg mem_wb_rd [4:0];
-reg mem_wb_RegWrite;
-reg mem_wb_MemtoTeg;
+reg [31:0] mem_wb_read_data;
+reg [31:0] mem_wb_result;
+
 
 mem_wb mem_wb_reg (
     .clk(clk),
@@ -452,8 +452,10 @@ mem_wb mem_wb_reg (
     .wb_result(mem_wb_result),
     .wb_rd(mem_wb_rd),
     .wb_RegWrite(mem_wb_RegWrite),
-    .wb_MemtoReg(mem_wb_MemtoTeg)
+    .wb_MemtoReg(mem_wb_MemtoReg)
 );
 
 // WB MUX
 assign write_data_mux = (mem_wb_RegWrite) ? mem_wb_read_data : ex_mem_alu_result;
+
+endmodule
