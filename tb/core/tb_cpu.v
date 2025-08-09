@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module tb_rv32i_cpu;
+module cpu;
 
     // Parâmetros do testbench
     parameter CLK_PERIOD = 10; // 100MHz
@@ -35,7 +35,7 @@ module tb_rv32i_cpu;
     initial begin
         // Configurar arquivos de dump
         $dumpfile("rv32i_cpu_tb.vcd");
-        $dumpvars(0, tb_rv32i_cpu);
+        $dumpvars(0, cpu);
         
         // Inicialização
         clk = 0;
@@ -140,7 +140,7 @@ module tb_rv32i_cpu;
             
             // Detectar branches/jumps
             if (dut.pc_branch_taken) begin
-                $display("    [DEBUG] Branch tomado! Novo PC = 0x%08h", dut.ex_mem_adder_out);
+                $display("    [DEBUG] Branch tomado! Novo PC = 0x%08h", dut.branch_target);
             end
         end
     end

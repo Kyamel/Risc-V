@@ -1,53 +1,29 @@
-`timescale 1ns / 1ps
-`include "constants.vh"
-
-module branch_unit (
-    input wire [31:0] id_ex_pc,
-    input wire [31:0] id_ex_instruction,
-    input wire [31:0] id_ex_rs1_data,
-    input wire [31:0] id_ex_rs2_data,
-    input wire [31:0] id_ex_immediate,
-    input wire [`CONTROL_SIGNALS_WIDTH-1:0] id_ex_control_signals,
-
-    output reg pc_src,
-    output reg [31:0] new_pc,
-    output reg flush    
+module branch_unit(
+    input  wire        branch,        // sinal de controle: é branch?
+    input  wire [2:0]  funct3,        // tipo de branch
+    input  wire [31:0] rs1_val,       // valor do registrador rs1
+    input  wire [31:0] rs2_val,       // valor do registrador rs2
+    input  wire [31:0] pc,            // PC atual
+    input  wire [31:0] imm,           // imediato já estendido
+    output reg         branch_taken,  // 1 se deve tomar o branch
+    output reg [31:0]  branch_target  // endereço destino
 );
 
-    // Extrair sinais de controle e campos da instrução
-    wire is_branch = id_ex_control_signals[`CTRL_BRANCH];  // Usando macro com prefixo CTRL_
-    wire [2:0] funct3 = id_ex_instruction[14:12];         // Campo funct3 para tipo de branch
-    wire is_jump = id_ex_control_signals[`CTRL_JUMP];     // Sinal de instrução jump
+always @(*) begin
+    branch_taken = 1'b0;
+    branch_target = pc + imm;
 
-    always @(*) begin
-        // Valores padrão
-        pc_src = 1'b0;
-        new_pc = 32'b0;
-        flush = 1'b0;
-
-        // Lógica para branches
-        if (is_branch) begin
-            case (funct3)
-                `BRANCH_EQ:  pc_src = (id_ex_rs1_data == id_ex_rs2_data);  // beq
-                `BRANCH_NE:  pc_src = (id_ex_rs1_data != id_ex_rs2_data);  // bne
-                `BRANCH_LT:  pc_src = ($signed(id_ex_rs1_data) < $signed(id_ex_rs2_data));  // blt
-                `BRANCH_GE:  pc_src = ($signed(id_ex_rs1_data) >= $signed(id_ex_rs2_data)); // bge
-                `BRANCH_LTU: pc_src = (id_ex_rs1_data < id_ex_rs2_data);   // bltu
-                `BRANCH_GEU: pc_src = (id_ex_rs1_data >= id_ex_rs2_data);  // bgeu
-                default: pc_src = 1'b0;
-            endcase
-
-            if (pc_src) begin
-                new_pc = id_ex_pc + id_ex_immediate;
-                flush = 1'b1;
-            end
-        end
-        // Lógica para jumps (JAL/JALR)
-        else if (is_jump) begin
-            pc_src = 1'b1;
-            new_pc = id_ex_pc + id_ex_immediate;  // Para JALR, o cálculo é diferente
-            flush = 1'b1;
-        end
+    if (branch) begin
+        case (funct3)
+            3'b000: branch_taken = (rs1_val == rs2_val);                       // BEQ
+            3'b001: branch_taken = (rs1_val != rs2_val);                       // BNE
+            3'b100: branch_taken = ($signed(rs1_val) < $signed(rs2_val));      // BLT
+            3'b101: branch_taken = ($signed(rs1_val) >= $signed(rs2_val));     // BGE
+            3'b110: branch_taken = (rs1_val < rs2_val);                        // BLTU
+            3'b111: branch_taken = (rs1_val >= rs2_val);                       // BGEU
+            default: branch_taken = 1'b0;
+        endcase
     end
+end
 
 endmodule
