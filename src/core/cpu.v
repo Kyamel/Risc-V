@@ -21,8 +21,8 @@ module rv32i_cpu #(
 // PC
 // -----------------------
 
-reg [31:0] pc_next = 0; // Program Counter
-reg [31:0] pc_out ; // Output PC
+wire [31:0] pc_next = 0; // Program Counter
+wire [31:0] pc_out ; // Output PC
 
 pc_generator pc_gen (
     .clk(clk),
@@ -31,12 +31,8 @@ pc_generator pc_gen (
     .pc_out(pc_out)
 );
 
-reg pc_branch_taken;
-reg [31:0] pc_plus_4; // PC + 4
-assign pc_plus_4 = pc_out + 4;
-reg [31:0] pc_mux ; // MUX para o próximo PC
-reg [31:0] ex_mem_adder_out; // Resultado do adder no estágio EX/MEM
-assign pc_mux = (pc_branch_taken) ? ex_mem_adder_out : pc_plus_4;
+// lógica para pc_next
+assign pc_next = (pc_branch_taken) ? ex_mem_adder_out : (pc_out + 4);
 
 // -----------------------
 // Instruction Memory
@@ -401,7 +397,10 @@ ex_mem ex_mem_reg (
 );
 
 // AND for RegWrite control
-assign pc_branch_taken = ex_mem_alu_zero & ex_mem_RegWrite;
+//assign pc_branch_taken = ex_mem_alu_zero & ex_mem_RegWrite;
+// Corrigindo a lógica de branch taken
+wire pc_branch_taken = ex_mem_Branch & ex_mem_alu_zero; // Branch só ocorre se Branch=1 e ALU Zero=1
+
 
 // -----------------------
 // Data Memory
@@ -456,6 +455,6 @@ mem_wb mem_wb_reg (
 );
 
 // WB MUX
-assign write_data_mux = (mem_wb_RegWrite) ? mem_wb_read_data : ex_mem_alu_result;
+assign write_data_mux = (mem_wb_MemtoReg) ? mem_wb_read_data : mem_wb_result;
 
 endmodule
