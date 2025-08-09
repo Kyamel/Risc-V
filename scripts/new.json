@@ -1,4 +1,34 @@
 {
+     "cpu": {
+        "sources": [
+            "src/core/cpu.v",
+
+            "src/components/pc_generator.v",
+
+            "src/stages/if_id.v",
+            "src/components/instr_parser.v",
+            "src/components/immediate_data_extractor.v",
+            "src/control/control_unit.v",
+
+            "src/stages/id_ex.v",
+            "src/control/alu_control.v",
+            "src/components/alu.v",
+
+            "src/stages/ex_mem.v",
+            "src/stages/mem_wb.v",
+           
+
+            "src/components/register_file.v",
+            "src/memory/instruction_memory.v",
+            "src/memory/data_memory.v",
+            
+            "src/control/hazard_detection.v",
+            "src/control/forwarding_unit.v"
+
+        ],
+        "tb": "tb/core/tb_cpu.v"
+    },
+
     "rv32i_cpu": {
         "sources": [
             "src/core/rv32i_cpu.v",

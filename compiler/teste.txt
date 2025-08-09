@@ -1,0 +1,32 @@
+
+/* // Módulo auxiliar para criar uma memória de programa de teste
+module test_program_generator;
+    
+    // Este módulo pode ser usado para gerar um programa de teste simples
+    // Exemplo de instruções RISC-V:
+    
+    initial begin
+        $display("Programa de teste sugerido (salvar como program.hex):");
+        $display("// Instrução 1: ADDI x1, x0, 10    (x1 = 10)");
+        $display("00a00093");
+        $display("// Instrução 2: ADDI x2, x0, 20    (x2 = 20)"); 
+        $display("01400113");
+        $display("// Instrução 3: ADD x3, x1, x2     (x3 = x1 + x2 = 30)");
+        $display("002081b3");
+        $display("// Instrução 4: SUB x4, x3, x1     (x4 = x3 - x1 = 20)");
+        $display("40118233");
+        $display("// Instrução 5: SW x2, 0(x1)       (mem[10] = 20)");
+        $display("0020a023");
+        $display("// Instrução 6: LW x5, 0(x1)       (x5 = mem[10] = 20)");
+        $display("0000a283");
+        $display("// Instrução 7: BEQ x2, x5, 8      (if x2 == x5, jump)");
+        $display("00510463");
+        $display("// Instrução 8: ADDI x6, x0, 99    (x6 = 99, não executada se branch)");
+        $display("06300313");
+        $display("// Instrução 9: ADDI x7, x0, 42    (x7 = 42)");
+        $display("02a00393");
+        $display("// Instrução 10: JAL x8, 8         (x8 = PC+4, jump 8 bytes)");
+        $display("008004ef");
+    end
+    
+endmodule */

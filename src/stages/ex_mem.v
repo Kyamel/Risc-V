@@ -5,11 +5,14 @@ module ex_mem (
     input wire         rst,
     input wire         stall,
     input wire         flush,
-
+    
     // Control signals from EX stage (to be passed to MEM/WB stages)
+    // MEM stage control signals
     input wire         ex_Branch,          // To MEM stage for branch decision
+    input wire         ex_Jump, 
     input wire         ex_MemRead,         // To MEM stage for memory read
     input wire         ex_MemWrite,        // To MEM stage for memory write
+    // WB stage control signals
     input wire         ex_RegWrite,        // To WB stage for register write
     input wire         ex_MemtoReg,        // To WB stage for memory-to-register mux
     
@@ -22,13 +25,14 @@ module ex_mem (
     
     // Saídas para o estágio MEM
     output reg [31:0]  mem_addr,           // Endereço para memória de dados (ALU Result)
-    output reg        mem_alu_zero, 
+    output reg         mem_alu_zero, 
     output reg [31:0]  mem_write_data,     // Dado para escrita na memória
     output reg [4:0]   mem_rd,             // Registrador destino (para WB e forwarding)
     output reg [31:0]  mem_adder_out,      // PC + offset (para cálculo de branch)
     
     // Control signals to MEM stage
     output reg        mem_Branch,          // Branch control to MEM stage
+    output reg        mem_Jump,
     output reg        mem_MemRead,         // Memory read control to MEM stage
     output reg        mem_MemWrite,        // Memory write control to MEM stage
     
@@ -47,6 +51,7 @@ module ex_mem (
             
             // Reset control signals
             mem_Branch     <= 1'b0;
+            mem_Jump       <= 1'b0;
             mem_MemRead    <= 1'b0;
             mem_MemWrite   <= 1'b0;
             mem_RegWrite   <= 1'b0;
@@ -62,6 +67,7 @@ module ex_mem (
             
             // Pass control signals through pipeline
             mem_Branch     <= ex_Branch;
+            mem_Jump       <= ex_Jump;
             mem_MemRead    <= ex_MemRead;
             mem_MemWrite   <= ex_MemWrite;
             mem_RegWrite   <= ex_RegWrite;
