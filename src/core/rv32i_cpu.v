@@ -347,7 +347,7 @@ module rv32i_cpu #(
     // Debug da memória
     assign debug_mem_value = data_mem.memory[debug_mem_index];
 
-    branch_unit branch_unit (
+    branch_unit branch (
         .id_ex_pc(ex_pc),
         .id_ex_instruction(instruction_id),
         .id_ex_rs1_data(forward_data_1),
