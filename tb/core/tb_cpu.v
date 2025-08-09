@@ -106,11 +106,11 @@ module tb_rv32i_cpu;
     // Task para exibir o estado do pipeline
     task display_pipeline_state;
         begin
-            $display("%5d | %04h | Instr:%08h | Op:%07b Rs1:%02d Rs2:%02d | ALU:%08h Zero:%b | Mem:%08h R/W:%b/%b | Reg:%02d Data:%08h",
+            $display("%5d | %04h | Instr:%08h | Op:%07b Rs1:%02d Rs2:%02d Rd:%02d Imm:%02d | ALU:%08h Zero:%b | Mem:%08h R/W:%b/%b | Reg:%02d Data:%08h",
                 cycle_count,
                 dut.pc_out,
                 dut.instruction,
-                dut.opcode, dut.rs1, dut.rs2,
+                dut.opcode, dut.rs1, dut.rs2, dut.rd, dut.imm_data,
                 dut.alu_result, dut.alu_zero,
                 dut.ex_mem_alu_result, dut.ex_mem_MemRead, dut.ex_mem_MemWrite,
                 dut.mem_wb_rd, dut.write_data_mux
