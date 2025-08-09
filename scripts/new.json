@@ -34,6 +34,7 @@
             "src/core/rv32i_cpu.v",
 
             "src/components/pc_generator.v",
+            "src/components/branch_unit",
 
             "src/stages/if_id.v",
             "src/components/instr_parser.v",
