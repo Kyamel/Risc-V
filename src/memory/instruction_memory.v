@@ -2,7 +2,7 @@
 
 module instruction_memory #(
     parameter WIDTH     = 32,          // Largura de cada instrução
-    parameter DEPTH    = 256,         // Quantidade de instruções
+    parameter DEPTH    = 256,           // Quantidade de instruções
     parameter INIT_FILE = ""           // Caminho do arquivo de inicialização (HEX)
 )(
     input wire [31:0] instr_addr,      // Endereço da instrução (PC)
