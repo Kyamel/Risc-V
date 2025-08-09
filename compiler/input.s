@@ -1,11 +1,10 @@
-addi x1, x0, 1  ; x1 = 1
-sw x1, 0(x0)    ; armazena 1 em mem[0]
-addi x4, x0, 2  ; x4 = 2
-lw x2, 0(x0)    ; x2 = 1
-sll  x5, x4, x2  ; x5 = 2 << 1 = 4
-xor  x6, x5, x4 ; x6 = 6
-sw   x4, 4(x0)
-sw   x5, 8(x0)
-lw   x7, 4(x0)  ; x7 = 2
-lw   x8, 8(x0)  ; x8 = 4
-add x9, x7, x8 ; x9 = 6
+addi x1, x0, 5          # x1 = 5
+addi x2, x0, 4          # x2 = 5
+nop
+nop
+bne  x1, x2, 4          # Salta 4 instruções (16 bytes) se x1 != x2
+addi x3, x0, 1          # x2 = 1
+#jal  x0, -4             # volta para o bne
+#addi x4, x0, 3          # x4 = 0, pois eh saltado
+#add x6, x1, x2          # x6 = 6
+add  x5, x1, x1         # x5 = 10
