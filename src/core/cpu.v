@@ -49,7 +49,7 @@ assign flush = (pc_branch_taken);
 // Instruction Memory
 // -----------------------
 
-wire [INSTR_WIDTH-1:0] instruction; // Changed to wire
+wire [INSTR_WIDTH-1:0] instruction;
 instruction_memory #(
     .WIDTH(INSTR_WIDTH),
     .DEPTH(INSTR_DEPTH),
@@ -67,8 +67,8 @@ instruction_memory #(
 // IF/ID Pipeline Register
 // -----------------------
 
-wire [31:0] id_pc; // Changed to wire
-wire [INSTR_WIDTH-1:0] id_instr; // Changed to wire
+wire [31:0] id_pc; 
+wire [INSTR_WIDTH-1:0] id_instr; 
 
 if_id if_id_reg (
     .clk(clk),
@@ -85,10 +85,10 @@ if_id if_id_reg (
 // Instruction Parser
 // -----------------------
 
-wire [6:0] opcode; // Changed to wire
-wire [4:0] rs1, rs2, rd; // Changed to wire
-wire [2:0] funct3; // Changed to wire
-wire [6:0] funct7; // Changed to wire
+wire [6:0] opcode; 
+wire [4:0] rs1, rs2, rd; 
+wire [2:0] funct3; 
+wire [6:0] funct7; 
 
 instr_parser instr_parse (
     .instr(id_instr),
@@ -104,7 +104,7 @@ instr_parser instr_parse (
 // Immediate Data Extractor
 // ------------------------
 
-wire [31:0] imm_data; // Changed to wire
+wire [31:0] imm_data; 
 
 immediate_data_extractor imm_extract (
     .instr(id_instr),
@@ -115,8 +115,8 @@ immediate_data_extractor imm_extract (
 // Register File
 // -----------------------
 
-wire [31:0] read_data_1; // Changed to wire
-wire [31:0] read_data_2; // Changed to wire
+wire [31:0] read_data_1; 
+wire [31:0] read_data_2; 
 
 // WB stage signals
 wire [4:0] mem_wb_rd;
@@ -142,7 +142,7 @@ register_file #(
 // Control Unit
 // -----------------------
 
-wire [1:0] ALUOp; // Changed to wire
+wire [1:0] ALUOp; 
 wire ALUSrc;
 wire Branch;
 wire Jump;
