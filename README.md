@@ -1,5 +1,6 @@
 # Implementation of: RV32E Base Integer Instruction Set, Version 2.0
 
+[Github disponível em: ](https://github.com/joaovitorshenriques/Risc-V)
 
 ## ISA - RISC-V References
 
@@ -10,11 +11,10 @@
 **Backup do documento oficial:**  
   [riscv-unprivileged.pdf](docs/riscv-unprivileged.pdf)
 
+### Capitúlos mais relevantes  
 
-### Capitúlos mais relevantes:  
 **2.3. Immediate Encoding Variants**  
 **2.4. Integer Computational Instructions**
-
 
 ## Registradores RV32I e Convenções ABI
 
@@ -33,11 +33,9 @@
 | x18 - x27   | s2 - s11 | Saved registers |
 | x28 - x31   | t3 - t6  | Temporários  |
 
-**RV32E possui apenas registradores (x0 - x15)**
-
+- RV32E possui apenas registradores (x0 - x15)
 
 ## Instruções
-
 
 ### Essenciais (obrigatórias para implementar)
 
@@ -51,14 +49,12 @@
 | sw        | S-type | ADD      | Calcula endereço: rs1 + offset          | Reusa a operação ADD para calcular o endereço                      |
 | bne       | B-type | SUB ou XOR + OR | Verifica se rs1 != rs2                  | Pode usar SUB para comparar ou reaproveitar XOR + OR para detectar diferença |
 
-
 [Todas intruções Base RV32E](/docs/rv32e_instrucao_base_full.md)  
 [Intrucões Prioridade para Implementar](/docs/rv32e_instrucoes_base_priority.md)  
 ![Encoding](/docs/encoding.png)  
 ![Encoding Imediate variantes](/docs//encoding_imediate_variant.png)  
 ![Pipeline](/docs/risc-v-pipeline.svg)  
 ![Datapath](/docs/risc-v-dartapath.png)
-
 
 ## Estrutura do Peojeto
 
@@ -94,7 +90,7 @@ rv32e_processor/
 │   ├── memory/  
 │   │   ├── instruction_memory.v        # Memória de instruções             D  
 │   │   ├── data_memory.v               # Memória de dados                  D  
-│   │   └── cache_controller.v          # Controlador de cache (opcional)     
+│   │   └── cache_controller.v          # Controlador de cache (opcional)
 │   │  
 │   └── debug/  
 │       ├── performance_counters.v      # Contadores de performance  
@@ -125,10 +121,6 @@ rv32e_processor/
 │  
 └── Makefile                            # Automatização de build via make  
 
-
-
-
-
 rv32i_processor/  
 ├── src/  
 │   ├── core/  
@@ -137,7 +129,7 @@ rv32i_processor/
 │   │  
 │   ├── stages/  
 │   │   ├── if_id.v                     # Pipeline  
-│   │   ├── id_ex.v                     # Pipeline   
+│   │   ├── id_ex.v                     # Pipeline
 │   │   ├── ex_mem.v                    # Pipeline  
 │   │   ├── mem_wb.v                    # Pipeline  
 │   │  
@@ -152,7 +144,7 @@ rv32i_processor/
 │   │   ├── control_unit.v              # Unidade de controle principal     F  
 │   │   ├── hazard_detection.v          # Detecção de hazards               F
 │   │   ├── forwarding_unit.v           # Data forwarding                   F
-│   │   └── alu_control.v               # Controle de stalls                
+│   │   └── alu_control.v               # Controle de stalls
 │   │  
 │   ├── memory/  
 │   │   ├── instruction_memory.v        # Memória de instruções             W  
@@ -172,13 +164,4 @@ rv32i_processor/
 │   ├── pipeline_diagram.svg            # Diagrama do pipeline  
 │   └── instruction_set.md              # Conjunto de instruções  
 │  
-└── Makefile                            # Automatização de build via make  
-
-
-Mapeamento de Opcodes:
-Tipo de Instrução	Opcode (7 bits)	ALUOp	ALUSrc
-R-type	0110011	10	0
-I-type (loads)	0000011	00	1
-S-type (stores)	0100011	00	1
-I-type (arith)	0010011	11	1
-B-type (branches)	1100011	01	0
+└── Makefile                            # Automatização de build via make
