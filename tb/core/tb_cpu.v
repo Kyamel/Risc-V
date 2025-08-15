@@ -16,7 +16,7 @@ module tb_cpu;
         .INSTR_DEPTH(1024),
         .INSTR_INIT_FILE("compiler/program.hex"),
         .DATA_DEPTH(1024),
-        .DATA_INIT_FILE("none"),
+        .DATA_INIT_FILE("compiler/data.hex"),
         .REG_COUNT(32)
     ) dut (
         .clk(clk),
@@ -71,7 +71,6 @@ module tb_cpu;
         repeat(NUM_CYCLES) begin
             @(posedge clk);
             cycle_count = cycle_count + 1;
-            display_pipeline_state();
         end
         
         // Mostrar estado final dos registradores
@@ -81,7 +80,7 @@ module tb_cpu;
         $display("Reg | Hex Value  | Dec Value");
         $display("----|------------|----------");
         for (i = 0; i < 32; i = i + 1) begin
-            if (dut.reg_file.regs[i] != 0) begin // Mostrar apenas registradores não-zero
+            begin // Mostrar apenas registradores não-zero
                 $display("x%-2d | 0x%08h | %d", i, dut.reg_file.regs[i], dut.reg_file.regs[i]);
             end
         end
@@ -93,7 +92,7 @@ module tb_cpu;
         $display("Addr | Hex Value  | Dec Value");
         $display("-----|------------|----------");
         for (i = 0; i < 16; i = i + 1) begin
-            if (dut.data_mem.memory[i] != 0) begin // Mostrar apenas posições não-zero
+            begin // Mostrar apenas posições não-zero
                 $display("%04h | 0x%08h | %d", i*4, dut.data_mem.memory[i], dut.data_mem.memory[i]);
             end
         end
