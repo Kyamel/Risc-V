@@ -23,7 +23,8 @@ module rv32i_cpu #(
 
 wire [31:0] pc_out; // Output PC
 wire [31:0] pc_next; // Program Counter input
-wire [31:0] ex_mem_adder_out; // Declare missing wire
+wire [31:0] branch_target; // Declare missing wire
+wire flush;
 
 pc_generator pc_gen (
     .clk(clk),
@@ -36,13 +37,19 @@ pc_generator pc_gen (
 wire pc_branch_taken;
 
 // PC next logic - FIXED
-assign pc_next = (pc_branch_taken) ? ex_mem_adder_out : (pc_out + 4);
+assign pc_next = (pc_branch_taken) ? branch_target : (pc_out + 4);
+//assign pc_next = (jump)                     ? branch_target :
+//                 (branch && pc_branch_taken)   ? branch_target :
+//                                              (pc_out + 4);
+
+assign flush = (pc_branch_taken);
+
 
 // -----------------------
 // Instruction Memory
 // -----------------------
 
-wire [INSTR_WIDTH-1:0] instruction; // Changed to wire
+wire [INSTR_WIDTH-1:0] instruction;
 instruction_memory #(
     .WIDTH(INSTR_WIDTH),
     .DEPTH(INSTR_DEPTH),
@@ -60,14 +67,14 @@ instruction_memory #(
 // IF/ID Pipeline Register
 // -----------------------
 
-wire [31:0] id_pc; // Changed to wire
-wire [INSTR_WIDTH-1:0] id_instr; // Changed to wire
+wire [31:0] id_pc; 
+wire [INSTR_WIDTH-1:0] id_instr; 
 
 if_id if_id_reg (
     .clk(clk),
     .rst(rst),
     .stall(1'b0),
-    .flush(1'b0),
+    .flush(flush),
     .instr_in(instruction),
     .pc_in(pc_out),
     .instr_out(id_instr),
@@ -78,10 +85,10 @@ if_id if_id_reg (
 // Instruction Parser
 // -----------------------
 
-wire [6:0] opcode; // Changed to wire
-wire [4:0] rs1, rs2, rd; // Changed to wire
-wire [2:0] funct3; // Changed to wire
-wire [6:0] funct7; // Changed to wire
+wire [6:0] opcode; 
+wire [4:0] rs1, rs2, rd; 
+wire [2:0] funct3; 
+wire [6:0] funct7; 
 
 instr_parser instr_parse (
     .instr(id_instr),
@@ -97,7 +104,7 @@ instr_parser instr_parse (
 // Immediate Data Extractor
 // ------------------------
 
-wire [31:0] imm_data; // Changed to wire
+wire [31:0] imm_data; 
 
 immediate_data_extractor imm_extract (
     .instr(id_instr),
@@ -108,8 +115,8 @@ immediate_data_extractor imm_extract (
 // Register File
 // -----------------------
 
-wire [31:0] read_data_1; // Changed to wire
-wire [31:0] read_data_2; // Changed to wire
+wire [31:0] read_data_1; 
+wire [31:0] read_data_2; 
 
 // WB stage signals
 wire [4:0] mem_wb_rd;
@@ -135,7 +142,7 @@ register_file #(
 // Control Unit
 // -----------------------
 
-wire [1:0] ALUOp; // Changed to wire
+wire [1:0] ALUOp; 
 wire ALUSrc;
 wire Branch;
 wire Jump;
@@ -190,7 +197,7 @@ id_ex id_ex_reg (
     .clk(clk),
     .rst(rst),
     .stall(1'b0),
-    .flush(1'b0),
+    .flush(flush),
     // Dados do ID
     .id_read_data_1(read_data_1),
     .id_read_data_2(read_data_2),
@@ -354,7 +361,7 @@ ex_mem ex_mem_reg (
     .mem_alu_zero(ex_mem_alu_zero),
     .mem_write_data(ex_mem_write_data),
     .mem_rd(ex_mem_rd),
-    .mem_adder_out(ex_mem_adder_out),
+    .mem_adder_out(branch_target),
     // Control signals to MEM stage
     .mem_Branch(ex_mem_Branch),
     .mem_Jump(ex_mem_Jump),
