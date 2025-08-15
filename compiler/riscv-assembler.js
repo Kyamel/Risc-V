@@ -27,35 +27,73 @@ try {
   process.exit(1);
 }
 
-// Processa cada linha de assembly
-const output = [];
+// Primeira passagem: coleta labels e calcula seus endereços
+const labelMap = new Map();
+let currentAddress = 0;
+const processedLines = [];
+
 for (const asm of assemblyLines) {
   let instruction = asm.trim();
-
-  // Remove comentários iniciados por ";"
+  
+  // Remove comentários
   instruction = instruction.split(';')[0].trim();
+  if (!instruction) continue;
+  instruction = instruction.split('#')[0].trim();
+  if (!instruction) continue;
 
+  // Verifica se é um label
+  if (instruction.endsWith(':')) {
+    const labelName = instruction.slice(0, -1).trim();
+    labelMap.set(labelName, currentAddress);
+    continue;
+  }
 
   // Tradução de pseudoinstrução "nop"
   if (instruction.toLowerCase() === 'nop') {
     instruction = 'addi x0, x0, 0';
   }
 
+  processedLines.push(instruction);
+  currentAddress += 4; // Cada instrução ocupa 4 bytes
+}
+
+// Segunda passagem: substitui labels por endereços e codifica
+const output = [];
+currentAddress = 0;
+
+for (const instruction of processedLines) {
   try {
-    const encoder = new Encoder(instruction, config);
+    // Substitui labels em instruções de branch/jump
+    let processedInstruction = instruction;
+    const branchMatch = instruction.match(/(beq|bne|blt|bge|bltu|bgeu)\s+(x\d+),\s*(x\d+),\s*([^\s,]+)/i);
+    
+    if (branchMatch) {
+      const [, op, rs1, rs2, label] = branchMatch;
+      if (labelMap.has(label)) {
+        const targetAddress = labelMap.get(label);
+        const offset = (targetAddress - currentAddress) / 2; // Branch offset é em múltiplos de 2
+        processedInstruction = `${op} ${rs1}, ${rs2}, ${offset}`;
+      }
+    }
+
+    const encoder = new Encoder(processedInstruction, config);
     const binary = encoder.bin;
-    const hex = parseInt(binary, 2).toString(16).padStart(8, '0'); // 32 bits = 8 hex chars
+    const hex = parseInt(binary, 2).toString(16).padStart(8, '0');
+    
     output.push({
-      assembly: asm.trim(),
+      assembly: instruction,
       binary: binary,
       hex: hex,
     });
+    
+    currentAddress += 4;
   } catch (error) {
-    console.error(`Erro ao codificar "${asm.trim()}": ${error}`);
+    console.error(`Erro ao codificar "${instruction}": ${error}`);
     output.push({
-      assembly: asm.trim(),
+      assembly: instruction,
       error: error.message,
     });
+    currentAddress += 4;
   }
 }
 
