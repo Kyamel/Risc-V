@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module cpu;
+module tb_cpu;
 
     // Parâmetros do testbench
     parameter CLK_PERIOD = 10; // 100MHz
@@ -34,8 +34,10 @@ module cpu;
     
     initial begin
         // Configurar arquivos de dump
-        $dumpfile("rv32i_cpu_tb.vcd");
-        $dumpvars(0, cpu);
+        $dumpfile("build/wave/cpu_tb.vcd");
+        $dumpvars(0, tb_cpu);     // Todos os sinais do testbench
+        $dumpvars(1, dut);      // Sinais de topo do DUT
+        //$dumpvars(2, dut.pc_out, dut.instruction); // Sinais específicos
         
         // Inicialização
         clk = 0;
@@ -103,53 +105,6 @@ module cpu;
         $finish;
     end
     
-    // Task para exibir o estado do pipeline
-    task display_pipeline_state;
-        begin
-            $display("%5d | %04h | Instr:%08h | Op:%07b Rs1:%02d Rs2:%02d Rd:%02d Imm:%02d | ALU:%08h Zero:%b | Mem:%08h R/W:%b/%b | Reg:%02d Data:%08h",
-                cycle_count,
-                dut.pc_out,
-                dut.instruction,
-                dut.opcode, dut.rs1, dut.rs2, dut.rd, dut.imm_data,
-                dut.alu_result, dut.alu_zero,
-                dut.ex_mem_alu_result, dut.ex_mem_MemRead, dut.ex_mem_MemWrite,
-                dut.mem_wb_rd, dut.write_data_mux
-            );
-        end
-    endtask
     
-    // Monitor adicional para debug
-    always @(posedge clk) begin
-        if (!rst && cycle_count > 0) begin
-            // Detectar escritas no banco de registradores
-            if (dut.mem_wb_RegWrite && dut.mem_wb_rd != 0) begin
-                $display("    [DEBUG] Escrita no registrador x%02d = 0x%08h", 
-                        dut.mem_wb_rd, dut.write_data_mux);
-            end
-            
-            // Detectar acessos à memória
-            if (dut.ex_mem_MemWrite) begin
-                $display("    [DEBUG] Escrita na memória[0x%08h] = 0x%08h", 
-                        dut.ex_mem_alu_result, dut.ex_mem_write_data);
-            end
-            
-            if (dut.ex_mem_MemRead) begin
-                $display("    [DEBUG] Leitura da memória[0x%08h] = 0x%08h", 
-                        dut.ex_mem_alu_result, dut.mem_read_data);
-            end
-            
-            // Detectar branches/jumps
-            if (dut.pc_branch_taken) begin
-                $display("    [DEBUG] Branch tomado! Novo PC = 0x%08h", dut.branch_target);
-            end
-        end
-    end
-    
-    // Timeout de segurança
-    initial begin
-        #(CLK_PERIOD * NUM_CYCLES * 2);
-        $display("TIMEOUT! Simulação interrompida.");
-        $finish;
-    end
 
 endmodule
