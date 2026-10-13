@@ -1,7 +1,6 @@
 # Every branch type, taken and not taken.
 # If a branch misbehaves, the next instruction writes 99 to that case's register.
 # expect: x10=0 x11=0 x12=0 x13=0 x14=0 x15=0 x8=1 x9=0
-# cycles: 300
 
 addi x1, x0, -1
 addi x2, x0, 1

@@ -1,6 +1,5 @@
 # Loop: adds 5 + 4 + 3 + 2 + 1 with a backward branch.
 # expect: x1=15 x2=0 x3=1
-# cycles: 300
 
 addi x1, x0, 0       # sum
 addi x2, x0, 5       # counter

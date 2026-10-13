@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-// Generic processor testbench. Normally driven by scripts/test.js
+// Generic processor testbench. Normally driven by scripts/test.lua
 // (make prog / make trace), but it can also be run directly with vvp or with
 // the executable built by Verilator.
 //
