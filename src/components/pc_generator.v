@@ -3,9 +3,9 @@
 module pc_generator (
     input wire        clk,
     input wire        rst,
-    input wire [31:0] pc_in,    // Vem do MUX (PC + 4, branch, jump...)
+    input wire [31:0] pc_in,    // Next PC (PC + 4, branch/jump target, or PC on stall)
 
-    output reg [31:0] pc_out    // Vai para instruction_memory e adder
+    output reg [31:0] pc_out    // To instruction memory
 );
 
     always @(posedge clk or posedge rst) begin

@@ -1,109 +1,118 @@
 `timescale 1ns / 1ps
 
+// Generic processor testbench. Normally driven by scripts/test.js
+// (make prog / make trace), but it can also be run directly with vvp or with
+// the executable built by Verilator.
+//
+// Plusargs:
+//   +PROG=<file.hex>      program (required)
+//   +DATA=<file.hex>      initial data memory contents (optional)
+//   +END=<hex>            address right after the last program instruction; the
+//                         simulation stops when the instruction at this address
+//                         reaches WB (every earlier instruction has finished)
+//   +MAX_CYCLES=<n>       cycle limit (default 1000)
+//   +TRACE                print the pipeline state every cycle
+//   +VCD=<file.vcd>       dump a waveform for GTKWave
+//
+// Output (one item per line):
+//   TRACE <cycle> <pc/instr of IF ID EX MEM WB> <flush> <stall> <fwdA> <fwdB>
+//         <wb_we> <wb_rd> <wb_data> <mem_we> <mem_addr> <mem_wdata> <illegal>
+//   ILLEGAL <pc> <instr>     (instruction naming x16-x31 reached ID)
+//   HALT <cycles> | TIMEOUT <cycles>
+//   REG <n> <hex>
+//   MEM <address> <hex>      (non-zero words only)
+
 module tb_cpu;
 
-    // Parâmetros do testbench
-    parameter CLK_PERIOD = 10; // 100MHz
-    parameter NUM_CYCLES = 50; // Número de ciclos para simular
-    
-    // Sinais do DUT
-    reg clk;
-    reg rst;
-    
-    // Instanciar o CPU
-    rv32i_cpu #(
-        .INSTR_WIDTH(32),
+    localparam REG_COUNT = 16;  // RV32E
+
+    reg clk = 1'b0;
+    reg rst = 1'b1;
+
+    rv32e_cpu #(
         .INSTR_DEPTH(1024),
-        .INSTR_INIT_FILE("compiler/program.hex"),
+        .INSTR_INIT_FILE(""),
         .DATA_DEPTH(1024),
-        .DATA_INIT_FILE("compiler/data.hex"),
-        .REG_COUNT(32)
+        .DATA_INIT_FILE("none"),
+        .REG_COUNT(REG_COUNT)
     ) dut (
         .clk(clk),
         .rst(rst)
     );
-    
-    // Geração do clock
-    always #(CLK_PERIOD/2) clk = ~clk;
-    
-    // Contador de ciclos
-    integer cycle_count = 0;
-    
-    // Variáveis para formatação
-    integer i;
-    
+
+    always #5 clk = ~clk;
+
+    reg [8*512-1:0] prog_file, data_file, vcd_file;
+    reg [31:0] end_addr;
+    integer max_cycles, cycle, i;
+    reg trace, halted;
+
     initial begin
-        // Configurar arquivos de dump
-        $dumpfile("build/wave/cpu_tb.vcd");
-        $dumpvars(0, tb_cpu);     // Todos os sinais do testbench
-        $dumpvars(1, dut);      // Sinais de topo do DUT
-        //$dumpvars(2, dut.pc_out, dut.instruction); // Sinais específicos
-        
-        // Inicialização
-        clk = 0;
-        rst = 1;
-        
-        // Aplicar reset
-        #(CLK_PERIOD * 2);
-        rst = 0;
-        
-        $display("\n==========================================================");
-        $display("           TESTBENCH PARA CPU RISC-V RV32I");
-        $display("==========================================================\n");
-        
-        // Mostrar as primeiras 16 posições da memória de instruções
-        $display("MEMÓRIA DE INSTRUÇÕES - Primeiras 16 posições:");
-        $display("Addr  | Instrução (Hex) | Instrução (Bin)");
-        $display("------|-----------------|--------------------------------");
-        for (i = 0; i < 16; i = i + 1) begin
-            $display("%04h  | %08h        | %032b", 
-                    i*4, dut.instr_mem.memory[i], dut.instr_mem.memory[i]);
+        if (!$value$plusargs("PROG=%s", prog_file)) begin
+            $display("ERROR: missing +PROG=<file.hex>");
+            $finish;
         end
-        $display("\n");
-        
-        // Monitor de execução ciclo por ciclo
-        $display("EXECUÇÃO CICLO POR CICLO:");
-        $display("================================================================================");
-        $display("Ciclo | PC   | IF Stage      | ID Stage           | EX Stage           | MEM Stage          | WB Stage");
-        $display("------|------|---------------|--------------------|--------------------|--------------------|-----------");
-        
-        // Simular por NUM_CYCLES ciclos
-        repeat(NUM_CYCLES) begin
-            @(posedge clk);
-            cycle_count = cycle_count + 1;
+        if (!$value$plusargs("END=%h", end_addr)) end_addr = 32'hFFFFFFFF;
+        if (!$value$plusargs("MAX_CYCLES=%d", max_cycles)) max_cycles = 1000;
+        trace = $test$plusargs("TRACE");
+        if ($value$plusargs("VCD=%s", vcd_file)) begin
+            $dumpfile(vcd_file);
+            $dumpvars(0, tb_cpu);
         end
-        
-        // Mostrar estado final dos registradores
-        $display("\n\n==========================================================");
-        $display("ESTADO FINAL DOS REGISTRADORES:");
-        $display("==========================================================");
-        $display("Reg | Hex Value  | Dec Value");
-        $display("----|------------|----------");
-        for (i = 0; i < 32; i = i + 1) begin
-            begin // Mostrar apenas registradores não-zero
-                $display("x%-2d | 0x%08h | %d", i, dut.reg_file.regs[i], dut.reg_file.regs[i]);
+
+        // Let the memories' initial blocks (zero / NOP fill) run first
+        #1;
+        $readmemh(prog_file, dut.instr_mem.memory);
+        if ($value$plusargs("DATA=%s", data_file)) begin
+            $readmemh(data_file, dut.data_mem.memory);
+        end
+
+        repeat (2) @(posedge clk);
+        @(negedge clk) rst = 1'b0;
+
+        // Each iteration samples the middle of a cycle (negedge), when every
+        // signal has settled, and then advances to the next one.
+        cycle = 0;
+        halted = 1'b0;
+        while (!halted && cycle < max_cycles) begin
+            if (trace) begin
+                $display("TRACE %0d %h %h %h %h %h %h %h %h %h %h %b %b %b %b %b %0d %h %b %h %h %b",
+                    cycle,
+                    dut.pc_out, dut.instruction,
+                    dut.id_pc, dut.id_instr,
+                    dut.dbg_ex_pc, dut.dbg_ex_instr,
+                    dut.dbg_mem_pc, dut.dbg_mem_instr,
+                    dut.dbg_wb_pc, dut.dbg_wb_instr,
+                    dut.flush, dut.stall, dut.forward_a, dut.forward_b,
+                    dut.mem_wb_RegWrite, dut.mem_wb_rd, dut.write_data_mux,
+                    dut.ex_mem_MemWrite, dut.ex_mem_alu_result, dut.ex_mem_write_data,
+                    dut.illegal_reg);
+            end
+            // Reported once: on stall the instruction stays in ID; on flush it is discarded anyway
+            if (dut.illegal_reg && !dut.stall && !dut.flush) begin
+                $display("ILLEGAL %h %h", dut.id_pc, dut.id_instr);
+            end
+            if (dut.dbg_wb_instr != 32'b0 && dut.dbg_wb_pc >= end_addr) begin
+                halted = 1'b1;
+            end else begin
+                @(negedge clk);
+                cycle = cycle + 1;
             end
         end
-        
-        // Mostrar as primeiras 16 posições da memória de dados
-        $display("\n==========================================================");
-        $display("MEMÓRIA DE DADOS - Primeiras 16 posições:");
-        $display("==========================================================");
-        $display("Addr | Hex Value  | Dec Value");
-        $display("-----|------------|----------");
-        for (i = 0; i < 16; i = i + 1) begin
-            begin // Mostrar apenas posições não-zero
-                $display("%04h | 0x%08h | %d", i*4, dut.data_mem.memory[i], dut.data_mem.memory[i]);
+
+        if (halted) $display("HALT %0d", cycle);
+        else        $display("TIMEOUT %0d", cycle);
+
+        for (i = 0; i < REG_COUNT; i = i + 1) begin
+            $display("REG %0d %h", i, dut.reg_file.regs[i]);
+        end
+        for (i = 0; i < 1024; i = i + 1) begin
+            if (dut.data_mem.memory[i] !== 32'b0) begin
+                $display("MEM %h %h", i * 4, dut.data_mem.memory[i]);
             end
         end
-        
-        $display("\n==========================================================");
-        $display("SIMULAÇÃO COMPLETA!");
-        $display("==========================================================\n");
-        
+
         $finish;
     end
-    
-    
 
 endmodule

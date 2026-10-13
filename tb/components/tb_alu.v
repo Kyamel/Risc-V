@@ -3,21 +3,21 @@
 
 module tb_alu();
 
-    // Parâmetros para cores (ANSI escape codes) - mantidos localmente como solicitado
+    // Message colors (ANSI escape codes)
     parameter GREEN = "\033[0;32m";
     parameter RED = "\033[0;31m";
     parameter NC = "\033[0m"; // No Color
 
-    // Sinais de entrada
+    // Inputs
     reg [31:0] a;
     reg [31:0] b;
     reg [3:0] ALUOp;
     
-    // Sinais de saída
+    // Outputs
     wire [31:0] Result;
     wire Zero;
     
-    // Instância da ALU
+    // Device under test
     alu uut (
         .a(a),
         .b(b),
@@ -26,7 +26,7 @@ module tb_alu();
         .Zero(Zero)
     );
     
-    // Tarefa para exibir a operação atual
+    // Prints the current operation
     function string get_op_name;
         input [3:0] opcode;
         begin
@@ -47,7 +47,7 @@ module tb_alu();
         end
     endfunction
 
-    // Tarefa para verificar resultados
+    // Checks the results
     task check_result;
         input [31:0] expected;
         input expected_zero;
@@ -66,64 +66,64 @@ module tb_alu();
 
     // Testes
     initial begin
-        $display("\n=== Teste da ALU ===");
+        $display("\n=== ALU test ===");
         
-        // Teste 1: ADD
+        // Test 1: ADD
         a = 32'd5; b = 32'd7; ALUOp = `ALU_ADD;
         #10;
-        check_result(32'd12, 1'b0, "ADD básico");
+        check_result(32'd12, 1'b0, "Basic ADD");
         
-        // Teste 2: SUB
+        // Test 2: SUB
         a = 32'd10; b = 32'd4; ALUOp = `ALU_SUB;
         #10;
-        check_result(32'd6, 1'b0, "SUB básico");
+        check_result(32'd6, 1'b0, "Basic SUB");
         
-        // Teste 3: AND
+        // Test 3: AND
         a = 32'hFFFF0000; b = 32'h0000FFFF; ALUOp = `ALU_AND;
         #10;
         check_result(32'h00000000, 1'b1, "AND bit a bit");
         
-        // Teste 4: OR
+        // Test 4: OR
         a = 32'hAAAA0000; b = 32'h00005555; ALUOp = `ALU_OR;
         #10;
         check_result(32'hAAAA5555, 1'b0, "OR bit a bit");
         
-        // Teste 5: XOR
+        // Test 5: XOR
         a = 32'hAAAAAAAA; b = 32'h55555555; ALUOp = `ALU_XOR;
         #10;
         check_result(32'hFFFFFFFF, 1'b0, "XOR bit a bit");
         
-        // Teste 6: SLL
+        // Test 6: SLL
         a = 32'h00000001; b = 32'd3; ALUOp = `ALU_SLL;
         #10;
         check_result(32'h00000008, 1'b0, "Shift Left Logical");
         
-        // Teste 7: SRL
+        // Test 7: SRL
         a = 32'h80000000; b = 32'd4; ALUOp = `ALU_SRL;
         #10;
         check_result(32'h08000000, 1'b0, "Shift Right Logical");
         
-        // Teste 8: SRA
+        // Test 8: SRA
         a = 32'h80000000; b = 32'd4; ALUOp = `ALU_SRA;
         #10;
         check_result(32'hF8000000, 1'b0, "Shift Right Arith");
         
-        // Teste 9: SLT
+        // Test 9: SLT
         a = 32'd5; b = 32'd10; ALUOp = `ALU_SLT;
         #10;
         check_result(32'd1, 1'b0, "Set Less Than");
         
-        // Teste 10: SLTU
+        // Test 10: SLTU
         a = 32'hFFFFFFFF; b = 32'd1; ALUOp = `ALU_SLTU;
         #10;
         check_result(32'd0, 1'b1, "Set Less Than Unsigned");
         
-        // Teste 11: LUI
+        // Test 11: LUI
         a = 32'hxxxxxxxx; b = 32'h0000ABCD; ALUOp = `ALU_LUI;
         #10;
         check_result(32'h0000ABCD, 1'b0, "Load Upper Immediate");
         
-        // Teste 12: Zero flag
+        // Test 12: Zero flag
         a = 32'd10; b = 32'd10; ALUOp = `ALU_SUB;
         #10;
         check_result(32'd0, 1'b1, "Zero Flag Test");

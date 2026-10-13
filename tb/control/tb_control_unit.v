@@ -5,12 +5,12 @@ module tb_control_unit;
     // Entradas
     reg [6:0] opcode;
 
-    // Saídas
+    // Outputs
     wire [1:0] ALUOp;
     wire ALUSrc;
     wire RegWrite;
 
-    // Instancia o módulo sob teste
+    // Device under test
     control_unit uut (
         .opcode(opcode),
         .ALUOp(ALUOp),
@@ -18,7 +18,7 @@ module tb_control_unit;
         .RegWrite(RegWrite)
     );
 
-    // Função para imprimir colorido no terminal
+    // Colored terminal output
     task check_output;
         input [6:0] test_opcode;
         input [1:0] expected_ALUOp;
@@ -26,7 +26,7 @@ module tb_control_unit;
         input expected_RegWrite;
         begin
             opcode = test_opcode;
-            #1; // Espera propagação
+            #1; // Let the logic settle
 
             $write("Opcode: 0x%02h | ", opcode);
 
@@ -45,16 +45,16 @@ module tb_control_unit;
 
         //            opcode     ALUOp ALUSrc RegWrite
         check_output(7'b0110011, 2'b10, 1'b0, 1'b1); // R-type
-        check_output(7'b0010011, 2'b00, 1'b1, 1'b1); // I-type
+        check_output(7'b0010011, 2'b11, 1'b1, 1'b1); // I-type
         check_output(7'b0000011, 2'b00, 1'b1, 1'b1); // Load
         check_output(7'b0100011, 2'b00, 1'b1, 1'b0); // Store
-        check_output(7'b1100011, 2'b01, 1'b0, 1'b0); // Branch
-        check_output(7'b0110111, 2'b11, 1'b1, 1'b1); // LUI
+        check_output(7'b1100011, 2'b00, 1'b0, 1'b0); // Branch (compared by branch_decision_unit)
+        check_output(7'b0110111, 2'b00, 1'b1, 1'b1); // LUI (x0 + imm)
         check_output(7'b0010111, 2'b00, 1'b1, 1'b1); // AUIPC
-        check_output(7'b1101111, 2'b00, 1'b1, 1'b1); // JAL
+        check_output(7'b1101111, 2'b00, 1'b0, 1'b1); // JAL (ALU unused)
         check_output(7'b1100111, 2'b00, 1'b1, 1'b1); // JALR
 
-        // Teste com opcode inválido
+        // Invalid opcode
         check_output(7'b1111111, 2'b00, 1'b0, 1'b0); // Unknown
 
         $display("=== Testes finalizados ===");

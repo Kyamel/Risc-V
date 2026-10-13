@@ -2,7 +2,7 @@
 
 module tb_register_file();
 
-    // Parâmetros
+    // Parameters
     parameter WIDTH = 32;
     parameter DEPTH = 32;
     parameter CLK_PERIOD = 10; // 10 ns = 100 MHz
@@ -11,7 +11,7 @@ module tb_register_file();
     parameter RED = "\033[0;31m";
     parameter NC = "\033[0m"; // No Color
 
-    // Sinais
+    // Signals
     reg clk;
     reg rst;
     reg [4:0] rs1, rs2, rd;
@@ -20,7 +20,7 @@ module tb_register_file();
     wire [WIDTH-1:0] read_data_1, read_data_2;
     wire [WIDTH-1:0] debug_data_out;
 
-    // Instância do DUT
+    // Device under test
     register_file #(
         .WIDTH(WIDTH),
         .DEPTH(DEPTH)
@@ -31,32 +31,32 @@ module tb_register_file();
         .rs2(rs2),
         .rd(rd),
         .wd(wd),
-        .reg_write(reg_write),
+        .rw(reg_write),
         .read_data_1(read_data_1),
         .read_data_2(read_data_2),
         .debug_data_out(debug_data_out)
     );
 
-    // Geração de clock
+    // Clock
     always #(CLK_PERIOD/2) clk = ~clk;
 
-    // Task para verificação com cores (padrão [PASS]/[FAIL])
+    // Check task ([PASS]/[FAIL])
     task automatic verify;
         input string test_name;
         input [WIDTH-1:0] observed;
         input [WIDTH-1:0] expected;
         begin
             if (observed === expected) begin
-                $display("%s[PASS]%s %s: Obtido = 0x%h", GREEN, NC,
+                $display("%s[PASS]%s %s: got 0x%h", GREEN, NC,
                          test_name, observed);
             end else begin
-                $display("%s[FAIL]%s %s: Esperado = 0x%h, Obtido = 0x%h", RED, NC,
+                $display("%s[FAIL]%s %s: expected 0x%h, got 0x%h", RED, NC,
                          test_name, expected, observed);
             end
         end
     endtask
 
-    // Inicialização
+    // Stimulus
     initial begin
         clk = 0;
         rst = 1; // Ativa reset inicial
@@ -66,44 +66,44 @@ module tb_register_file();
         wd = 0;
         reg_write = 0;
 
-        // Desativa reset após 2 ciclos de clock
+        // Release reset after 2 clock cycles
         #(2*CLK_PERIOD);
         rst = 0;
 
-        // Teste 1: Verificação do Reset (todos os registradores exceto x0 devem ser 0)
-        $display("\n=== Teste 1: Verificação do Reset ===");
+        // Test 1: reset (every register must be 0)
+        $display("\n=== Test 1: reset ===");
         for (int i = 1; i < DEPTH; i++) begin
             rs1 = i;
-            #1; // Delta cycle para leitura assíncrona
-            verify($sformatf("Reset do registrador x%0d", i), read_data_1, 0);
+            #1; // Let the asynchronous read settle
+            verify($sformatf("Reset of register x%0d", i), read_data_1, 0);
         end
 
-        // Teste 2: Escrita e leitura em x5
-        $display("\n=== Teste 2: Escrita e Leitura ===");
+        // Test 2: write and read x5
+        $display("\n=== Test 2: write and read ===");
         reg_write = 1;
         rd = 5'd5;
         wd = 32'hDEADBEEF;
-        #CLK_PERIOD; // Espera escrita síncrona
+        #CLK_PERIOD; // Wait for the synchronous write
 
         rs1 = 5'd5;
         #1;
-        verify("Escrita em x5", read_data_1, wd);
+        verify("Write x5", read_data_1, wd);
 
-        // Teste 3: x0 é sempre zero (hardwired)
-        $display("\n=== Teste 3: Verificação de x0 ===");
-        rd = 5'd0;    // Tentativa de escrita em x0
+        // Test 3: x0 is always zero (hardwired)
+        $display("\n=== Test 3: x0 ===");
+        rd = 5'd0;    // Try to write x0
         wd = 32'h12345678;
         #CLK_PERIOD;
         rs1 = 5'd0;
         #1;
-        verify("Leitura de x0 (hardwired)", read_data_1, 0);
+        verify("Read x0 (hardwired)", read_data_1, 0);
 
-        // Finalização
-        $display("\n=== Todos os testes concluídos ===");
+        // Done
+        $display("\n=== All tests done ===");
         $finish;
     end
 
-    // Monitoramento opcional (para debug)
+    // Optional monitor (for debugging)
     initial begin
         $monitor("Tempo: %t | rs1=%0d (0x%h) | rs2=%0d (0x%h) | rd=%0d (wd=0x%h) | reg_write=%b",
                  $time, rs1, read_data_1, rs2, read_data_2, rd, wd, reg_write);

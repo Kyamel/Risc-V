@@ -51,9 +51,9 @@ module tb_ex_mem();
         input [31:0] expected;
         begin
             if (observed === expected) begin
-                $display("%s[PASS]%s %s: Obtido = 0x%h", GREEN, NC, test_name, observed);
+                $display("%s[PASS]%s %s: got 0x%h", GREEN, NC, test_name, observed);
             end else begin
-                $display("%s[FAIL]%s %s: Esperado = 0x%h, Obtido = 0x%h", RED, NC, 
+                $display("%s[FAIL]%s %s: expected 0x%h, got 0x%h", RED, NC, 
                          test_name, expected, observed);
             end
         end
@@ -72,7 +72,7 @@ module tb_ex_mem();
         ex_read_data_2_mux = 0;
         
         // Test 1: Reset
-        $display("\n=== Teste 1: Reset ===");
+        $display("\n=== Test 1: Reset ===");
         rst = 1;
         #(CLK_PERIOD);
         verify("Reset: mem_addr", mem_addr, 32'h0);
@@ -83,7 +83,7 @@ module tb_ex_mem();
         #(CLK_PERIOD);
 
         // Test 2: Normal operation
-        $display("\n=== Teste 2: Operação normal ===");
+        $display("\n=== Test 2: normal operation ===");
         ex_adder_out = 32'h00400010;
         ex_result = 32'h10010000;
         ex_rd = 5'h07;
@@ -95,7 +95,7 @@ module tb_ex_mem();
         verify("Normal: mem_adder_out", mem_adder_out, ex_adder_out);
 
         // Test 3: Stall
-        $display("\n=== Teste 3: Stall ===");
+        $display("\n=== Test 3: Stall ===");
         stall = 1;
         ex_adder_out = 32'h00400014;
         ex_result = 32'h10010004;
@@ -109,7 +109,7 @@ module tb_ex_mem();
         stall = 0;
 
         // Test 4: Flush
-        $display("\n=== Teste 4: Flush ===");
+        $display("\n=== Test 4: Flush ===");
         flush = 1;
         #(CLK_PERIOD);
         verify("Flush: mem_addr", mem_addr, 32'h0);
@@ -119,7 +119,7 @@ module tb_ex_mem();
         flush = 0;
 
         // Test 5: Transition from stall to normal
-        $display("\n=== Teste 5: Stall -> Normal ===");
+        $display("\n=== Test 5: Stall -> Normal ===");
         stall = 1;
         ex_adder_out = 32'h00400018;
         ex_result = 32'h10010008;
@@ -138,7 +138,7 @@ module tb_ex_mem();
         verify("Stall->Normal: mem_adder_out", mem_adder_out, ex_adder_out);
 
         // Final report
-        $display("\n=== Todos os testes concluídos ===");
+        $display("\n=== All tests done ===");
         $finish;
     end
 

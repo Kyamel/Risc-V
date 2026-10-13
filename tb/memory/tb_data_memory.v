@@ -4,7 +4,7 @@ module tb_data_memory();
     // Parameters
     parameter WIDTH = 32;
     parameter DEPTH = 1024;
-    parameter TEST_FILE = "compiler/data.hex";
+    parameter TEST_FILE = "none";  // initial contents are written below
     
     // ANSI colors
     string GREEN = "\033[1;32m";
@@ -47,6 +47,7 @@ module tb_data_memory();
         
         // Wait for memory initialization
         #10;
+        uut.memory[1] = 32'h11111111;  // palavra 1 = bytes 4..7
         
         // Test 1: Read from initialized memory
         mem_addr = 0;
@@ -57,13 +58,13 @@ module tb_data_memory();
         else
             $display("%s[FAIL]%s Test 1: Read address 0 - Expected: 0x00000000, Got: 0x%h", RED, RESET, read_data);
         
-        // Test 2: Read from address 1
-        mem_addr = 1;
+        // Test 2: read word 1 (byte address 4)
+        mem_addr = 4;
         #10;
         if (read_data === 32'h11111111)
-            $display("%s[PASS]%s Test 2: Read address 1 - Expected: 0x11111111, Got: 0x%h", GREEN, RESET, read_data);
+            $display("%s[PASS]%s Test 2: Read address 4 - Expected: 0x11111111, Got: 0x%h", GREEN, RESET, read_data);
         else
-            $display("%s[FAIL]%s Test 2: Read address 1 - Expected: 0x11111111, Got: 0x%h", RED, RESET, read_data);
+            $display("%s[FAIL]%s Test 2: Read address 4 - Expected: 0x11111111, Got: 0x%h", RED, RESET, read_data);
         
         // Test 3: Write operation
         mem_read = 0;
@@ -80,7 +81,7 @@ module tb_data_memory();
             $display("%s[FAIL]%s Test 3: Write and read address 4 - Expected: 0xAAAAAAAA, Got: 0x%h", RED, RESET, read_data);
         
         // Test 4: Address out of range (should wrap around)
-        mem_addr = 1024;  // This should wrap to address 0
+        mem_addr = DEPTH * 4;  // One past the end: wraps to word 0
         #10;
         if (read_data === 32'h00000000)
             $display("%s[PASS]%s Test 4: Address wrapping - Expected: 0x00000000, Got: 0x%h", GREEN, RESET, read_data);

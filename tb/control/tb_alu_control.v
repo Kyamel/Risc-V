@@ -3,7 +3,7 @@
 
 module tb_alu_control();
 
-    // Sinais de entrada
+    // Inputs
     reg [1:0] ALUOp;
     reg [9:0] Funct;
 
@@ -11,17 +11,17 @@ module tb_alu_control();
     parameter RED   = "\033[0;31m";
     parameter NC    = "\033[0m";
 
-    // Sinais de saída
+    // Outputs
     wire [3:0] Op;
     
-    // Instância do módulo testado
+    // Device under test
     alu_control uut (
         .ALUOp(ALUOp),
         .Funct(Funct),
         .Op(Op)
     );
     
-    // Tarefa para obter nome da operação
+    // Returns the operation name
     function string get_op_name;
         input [3:0] opcode;
         begin
@@ -42,7 +42,7 @@ module tb_alu_control();
         end
     endfunction
 
-    // Tarefa para verificar resultados
+    // Checks the results
     task check_operation;
         input [3:0] expected_op;
         input string test_name;
@@ -61,15 +61,15 @@ module tb_alu_control();
 
     // Testes
     initial begin
-        $display("\n=== Teste do ALU Control ===");
+        $display("\n=== ALU control test ===");
         
-        // Teste 1: Loads/Stores (ALUOp = 00)
+        // Test 1: Loads/Stores (ALUOp = 00)
         ALUOp = 2'b00;
         Funct = 10'bxxxxxxxxxx;
         #10;
         check_operation(`ALU_ADD, "Load/Store");
         
-        // Teste 2: Branches
+        // Test 2: Branches
         ALUOp = 2'b01;
         
         // BEQ
@@ -102,7 +102,7 @@ module tb_alu_control();
         #10;
         check_operation(`ALU_SLTU, "BGEU");
         
-        // Teste 3: Operações Aritméticas
+        // Test 3: arithmetic operations
         ALUOp = 2'b10;
         
         // ADD (funct7=0000000)
@@ -150,7 +150,7 @@ module tb_alu_control();
         #10;
         check_operation(`ALU_AND, "AND");
         
-        // Teste 4: Operações Imediatas (ALUOp = 11)
+        // Test 4: immediate operations (ALUOp = 11)
         ALUOp = 2'b11;
         
         // ADDI

@@ -2,15 +2,15 @@
 
 module tb_if_id();
 
-    // Parâmetros
+    // Parameters
     parameter CLK_PERIOD = 10; // 10 ns = 100 MHz
 
-    // Cores para mensagens (ANSI)
+    // Message colors (ANSI)
     parameter GREEN = "\033[0;32m";
     parameter RED   = "\033[0;31m";
     parameter NC    = "\033[0m"; // No Color
 
-    // Sinais
+    // Signals
     reg clk;
     reg rst;
     reg stall;
@@ -20,7 +20,7 @@ module tb_if_id();
     wire [31:0] pc_out;
     wire [31:0] instr_out;
 
-    // Instância do DUT
+    // Device under test
     if_id uut (
         .clk(clk),
         .rst(rst),
@@ -32,27 +32,27 @@ module tb_if_id();
         .instr_out(instr_out)
     );
 
-    // Geração de clock
+    // Clock
     always #(CLK_PERIOD/2) clk = ~clk;
 
-    // Task para verificação padronizada
+    // Check task
     task automatic verify;
         input string test_name;
         input [31:0] observed;
         input [31:0] expected;
         begin
             if (observed === expected) begin
-                $display("%s[PASS]%s %s: Obtido = 0x%h", GREEN, NC, test_name, observed);
+                $display("%s[PASS]%s %s: got 0x%h", GREEN, NC, test_name, observed);
             end else begin
-                $display("%s[FAIL]%s %s: Esperado = 0x%h, Obtido = 0x%h", RED, NC, 
+                $display("%s[FAIL]%s %s: expected 0x%h, got 0x%h", RED, NC, 
                          test_name, expected, observed);
             end
         end
     endtask
 
-    // Inicialização
+    // Stimulus
     initial begin
-        // Inicializa sinais
+        // Initial values
         clk = 0;
         rst = 0;
         stall = 0;
@@ -60,8 +60,8 @@ module tb_if_id();
         pc_in = 32'h00000000;
         instr_in = 32'h00000000;
 
-        // Teste 1: Reset assíncrono
-        $display("\n=== Teste 1: Reset assíncrono ===");
+        // Test 1: asynchronous reset
+        $display("\n=== Test 1: asynchronous reset ===");
         rst = 1;
         #(CLK_PERIOD);
         verify("Reset: pc_out", pc_out, 32'h0);
@@ -69,26 +69,26 @@ module tb_if_id();
         rst = 0;
         #(CLK_PERIOD);
 
-        // Teste 2: Operação normal (sem stall/flush)
-        $display("\n=== Teste 2: Operação normal ===");
+        // Test 2: normal operation (no stall/flush)
+        $display("\n=== Test 2: normal operation ===");
         pc_in = 32'h00400000;
         instr_in = 32'h00100093; // addi x1, x0, 1
         #(CLK_PERIOD);
-        verify("Operação normal: pc_out", pc_out, pc_in);
-        verify("Operação normal: instr_out", instr_out, instr_in);
+        verify("Normal: pc_out", pc_out, pc_in);
+        verify("Normal: instr_out", instr_out, instr_in);
 
-        // Teste 3: Stall (mantém valores anteriores)
-        $display("\n=== Teste 3: Stall ===");
+        // Test 3: stall (keeps the previous values)
+        $display("\n=== Test 3: stall ===");
         pc_in = 32'h00400004;
         instr_in = 32'h00200113; // addi x2, x0, 2
         stall = 1;
         #(CLK_PERIOD);
-        verify("Stall: pc_out mantido", pc_out, 32'h00400000); // Valor anterior
-        verify("Stall: instr_out mantido", instr_out, 32'h00100093);
+        verify("Stall: pc_out held", pc_out, 32'h00400000); // Previous value
+        verify("Stall: instr_out held", instr_out, 32'h00100093);
         stall = 0;
 
-        // Teste 4: Flush (zera saídas)
-        $display("\n=== Teste 4: Flush ===");
+        // Test 4: flush (clears the outputs)
+        $display("\n=== Test 4: flush ===");
         pc_in = 32'h00400008;
         instr_in = 32'h00300193; // addi x3, x0, 3
         flush = 1;
@@ -97,8 +97,8 @@ module tb_if_id();
         verify("Flush: instr_out", instr_out, 32'h0);
         flush = 0;
 
-        // Teste 5: Transição stall -> operação normal
-        $display("\n=== Teste 5: Stall -> Operação normal ===");
+        // Test 5: stall -> normal operation
+        $display("\n=== Test 5: stall -> normal ===");
         stall = 1;
         pc_in = 32'h0040000C;
         instr_in = 32'h00400213; // addi x4, x0, 4
@@ -107,11 +107,11 @@ module tb_if_id();
         pc_in = 32'h00400010;
         instr_in = 32'h00500293; // addi x5, x0, 5
         #(CLK_PERIOD);
-        verify("Stall -> Normal: pc_out atualizado", pc_out, pc_in);
-        verify("Stall -> Normal: instr_out atualizado", instr_out, instr_in);
+        verify("Stall -> normal: pc_out updated", pc_out, pc_in);
+        verify("Stall -> normal: instr_out updated", instr_out, instr_in);
 
-        // Finalização
-        $display("\n=== Todos os testes concluídos ===");
+        // Done
+        $display("\n=== All tests done ===");
         $finish;
     end
 

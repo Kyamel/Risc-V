@@ -65,9 +65,9 @@ module tb_id_ex();
         input [31:0] expected;
         begin
             if (observed === expected) begin
-                $display("%s[PASS]%s %s: Obtido = 0x%h", GREEN, NC, test_name, observed);
+                $display("%s[PASS]%s %s: got 0x%h", GREEN, NC, test_name, observed);
             end else begin
-                $display("%s[FAIL]%s %s: Esperado = 0x%h, Obtido = 0x%h", RED, NC, 
+                $display("%s[FAIL]%s %s: expected 0x%h, got 0x%h", RED, NC, 
                          test_name, expected, observed);
             end
         end
@@ -89,7 +89,7 @@ module tb_id_ex();
         id_rd = 0;
         
         // Test 1: Reset
-        $display("\n=== Teste 1: Reset ===");
+        $display("\n=== Test 1: Reset ===");
         rst = 1;
         #(CLK_PERIOD);
         verify("Reset: ex_read_data_1", ex_read_data_1, 32'h0);
@@ -103,7 +103,7 @@ module tb_id_ex();
         #(CLK_PERIOD);
 
         // Test 2: Normal operation
-        $display("\n=== Teste 2: Operação normal ===");
+        $display("\n=== Test 2: normal operation ===");
         id_read_data_1 = 32'h12345678;
         id_read_data_2 = 32'h9ABCDEF0;
         id_imm_data = 32'h00000FFF;
@@ -121,7 +121,7 @@ module tb_id_ex();
         verify("Normal: ex_rd", ex_rd, id_rd);
 
         // Test 3: Stall
-        $display("\n=== Teste 3: Stall ===");
+        $display("\n=== Test 3: Stall ===");
         stall = 1;
         id_read_data_1 = 32'h11111111;
         id_read_data_2 = 32'h22222222;
@@ -141,7 +141,7 @@ module tb_id_ex();
         stall = 0;
 
         // Test 4: Flush
-        $display("\n=== Teste 4: Flush ===");
+        $display("\n=== Test 4: Flush ===");
         flush = 1;
         #(CLK_PERIOD);
         verify("Flush: ex_read_data_1", ex_read_data_1, 32'h0);
@@ -154,7 +154,7 @@ module tb_id_ex();
         flush = 0;
 
         // Test 5: Transition from stall to normal
-        $display("\n=== Teste 5: Stall -> Normal ===");
+        $display("\n=== Test 5: Stall -> Normal ===");
         stall = 1;
         id_read_data_1 = 32'hAAAAAAAA;
         id_read_data_2 = 32'hBBBBBBBB;
@@ -182,7 +182,7 @@ module tb_id_ex();
         verify("Stall->Normal: ex_rd", ex_rd, 5'h0C);
 
         // Final report
-        $display("\n=== Todos os testes concluídos ===");
+        $display("\n=== All tests done ===");
         $finish;
     end
 

@@ -16,3 +16,4 @@ qtbuild/
 *.log
 
 processor_state.json
+.mypy_cache/

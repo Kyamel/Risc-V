@@ -1,0 +1,775 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% How to use writeLaTeX: 
+%
+% You edit the source code here on the left, and the preview on the
+% right shows you the result within a few seconds.
+%
+% Bookmark this page and share the URL with your co-authors. They can
+% edit at the same time!
+%
+% You can upload figures, bibliographies, custom classes and
+% styles using the files menu.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+
+\usepackage{graphicx,url}
+
+%\usepackage[brazil]{babel}   
+\usepackage[utf8]{inputenc}  
+
+     
+\sloppy
+
+\title{Trabalho Prático RISC-V}
+
+\author{Lucas dos Anjos Camelo\inst{1}, João Vitor Soares Henriques\inst{2}} 
+
+
+\address{ICEA -- Universidade Federal de Ouro Preto
+  (UFOP)
+\nextinstitute
+  Departamento de Engenharia da Computação DCEA\\
+  Universidade Federal de Ouro Preto (ICEA) -- João Monlevade, MG -- Brazil
+  \email{joao.henriques@aluno.ufop.edu.br, lucas.camelo@aluno.ufop.edu.br}
+}
+
+\begin{document} 
+
+\maketitle
+
+\begin{abstract}
+ This paper presents the design and implementation of a 32-bit processor based on the RV32E specification of the RISC-V instruction set architecture (ISA). The RV32E is a variant optimized for embedded systems, featuring a reduced register file of 16 registers, which leads to a simpler design, smaller silicon area, and lower power consumption. The processor is implemented in Verilog HDL using a five-stage pipeline architecture (Fetch, Decode, Execute, Memory, and Write-back) to maximize instruction throughput. The project scope covers the implementation of an essential subset of instructions to validate the processor's basic functionality, serving as a case study for low-cost CPU design.
+\end{abstract}
+     
+\begin{resumo} 
+Este trabalho apresenta o projeto e a implementação de um processador de 32 bits baseado na especificação RV32E do conjunto de instruções RISC-V. O RV32E é uma variante otimizada para sistemas embarcados, caracterizada por um banco de registradores reduzido a 16, o que resulta em um design mais simples, menor área de silício e consumo de energia reduzido. O processador foi implementado em Verilog HDL utilizando uma arquitetura de pipeline de cinco estágios (Busca, Decodificação, Execução, Memória e Escrita) para maximizar a vazão de instruções. O escopo do projeto abrange a implementação de um subconjunto essencial de instruções para validar a funcionalidade básica do processador, servindo como um estudo de caso para o design de CPUs de baixo custo.
+\end{resumo}
+
+
+\section{Introdução}
+
+Este documento descreve o projeto e a implementação de um processador de 32 bits que utiliza a arquitetura de conjunto de instruções (ISA) RISC-V, focando na especificação de inteiros base RV32E~\cite{riscv-spec}. A arquitetura RISC-V é notável por seu modelo aberto e modular, que facilita a criação de processadores personalizados para múltiplas aplicações.
+
+O RV32E é uma extensão do conjunto de instruções base de inteiros (RV32I), otimizada para sistemas embarcados e microcontroladores de baixo custo. Sua principal característica é a redução do banco de registradores de 32 para 16 (x0 a x15), o que simplifica o design do hardware, diminui a área de silício e reduz o consumo de energia, mantendo a compatibilidade com o ecossistema de software do RISC-V.
+
+O objetivo deste projeto é desenvolver um processador com um pipeline de 5 estágios (Busca, Decodificação, Execução, Memória e Escrita), implementando um subconjunto essencial de instruções do RV32E para garantir a funcionalidade básica. A implementação será realizada em Verilog HDL.
+
+Esta documentação servirá como um guia completo, abordando desde a análise da arquitetura e do conjunto de instruções até a descrição detalhada de cada módulo de hardware, sua lógica de funcionamento e a integração final no processador.
+
+\section{Desenvolvimento} \label{sec:desenvolvimento}
+
+Nesta seção, descreveremos a arquitetura do processador e detalharemos a implementação de cada um dos seus componentes fundamentais. A estrutura do projeto foi organizada de forma modular para facilitar o desenvolvimento, a simulação e a verificação de cada parte do sistema.
+
+\subsection{Arquitetura do Processador} 
+A arquitetura escolhida para este processador é um pipeline clássico de 5 estágios. Esta abordagem permite a sobreposição da execução de múltiplas instruções, aumentando significativamente a vazão (throughput) do processador em comparação com uma implementação de ciclo único. Os estágios do pipeline são descritos a seguir: 
+\begin{itemize} \item \textbf{IF (Instruction Fetch):} Busca da próxima instrução na memória. \item \textbf{ID (Instruction Decode):} Decodificação da instrução, leitura dos operandos do banco de registradores e geração de imediatos. 
+\item \textbf{EX (Execute):} Execução da operação na Unidade Lógica e Aritmética (ULA) e cálculo de endereços de desvio. 
+\item \textbf{MEM (Memory Access):} Acesso à memória de dados para operações de leitura (load) ou escrita (store). 
+\item \textbf{WB (Write Back):} Escrita do resultado de volta ao banco de registradores. \end{itemize} 
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{risc-v-pipeline-full.png}
+    \caption{Arquitetura de pipeline de cinco estágios (IF, ID, EX, MEM, WB) utilizada no processador RV32E.}
+    \label{fig:pipeline}
+\end{figure}
+
+Como mostrado na Figura~\ref{fig:pipeline}, o processador segue o modelo clássico de cinco estágios, permitindo que várias instruções sejam processadas simultaneamente em diferentes fases do ciclo de execução.
+
+\subsection{Componentes do Caminho de Dados (Datapath)}
+O caminho de dados (datapath) é composto pelos blocos funcionais responsáveis por armazenar, manipular e transferir os dados ao longo do pipeline. Estes componentes são a base sobre a qual os estágios do processador são construídos.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{risc-v-datapath.png}
+    \caption{Datapath do processador RV32E implementado, destacando blocos funcionais, caminhos de dados e sinais de controle.}
+    \label{fig:datapath}
+\end{figure}
+
+\subsubsection{Unidade Lógica e Aritmética (ULA)}
+A Unidade Lógica e Aritmética (ULA), ou ALU (Arithmetic Logic Unit), é o componente central do estágio de Execução. Trata-se de um circuito puramente combinacional que realiza as operações matemáticas e lógicas definidas pelo conjunto de instruções. A operação específica a ser executada é selecionada por um sinal de controle (ALUControl) proveniente da Unidade de Controle.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_ula.png}
+    \caption{Codigo fonte da ULA}
+    \label{fig:ula}
+\end{figure}
+
+Analisando o código-fonte da ULA apresentado na Figura~\ref{fig:ula}, podemos observar sua implementação em \textit{Verilog}. 
+O módulo, nomeado \texttt{alu}, possui duas entradas de dados de 32~bits (\texttt{a} e \texttt{b}), 
+uma entrada de controle de 4~bits (\texttt{ALUOp}) que determina a operação a ser realizada, 
+uma saída de 32~bits para o resultado (\texttt{Result}) e uma saída de 1~bit (\texttt{Zero}).
+
+O comportamento da ULA é definido dentro de um bloco \texttt{always @(*)}, 
+que caracteriza o circuito como combinacional, ou seja, 
+suas saídas reagem instantaneamente a qualquer mudança nas entradas. 
+A seleção da operação é implementada através de uma estrutura \texttt{case}, 
+que avalia o valor do sinal \texttt{ALUOp}. 
+Cada valor possível para \texttt{ALUOp} corresponde a uma operação específica, conforme detalhado a seguir:
+
+\begin{itemize}
+    \item \textbf{ALU\_ADD} e \textbf{ALU\_SUB}: Realizam as operações aritméticas fundamentais de adição 
+    (\texttt{Result = a + b}) e subtração (\texttt{Result = a - b}).
+
+    \item \textbf{ALU\_SLL}: Executa um deslocamento lógico para a esquerda (\textit{shift left logical}), 
+    onde os bits da entrada \texttt{a} são deslocados para a esquerda por um número de posições 
+    determinado pelos 5 bits menos significativos da entrada \texttt{b} 
+    (\texttt{Result = a << b[4:0]}).
+
+    \item \textbf{ALU\_SLT}: Implementa a operação \textit{set on less than} para números com sinal. 
+    A saída \texttt{Result} será 1 se o valor de \texttt{a} (interpretado como número com sinal) for 
+    menor que o valor de \texttt{b} (também com sinal), e 0 caso contrário.
+
+    \item \textbf{ALU\_SLTU}: Similar à anterior, mas realiza a comparação \textit{set on less than} 
+    para números sem sinal.
+
+    \item \textbf{ALU\_XOR}, \textbf{ALU\_OR}, \textbf{ALU\_AND}: Executam as operações lógicas 
+    bit a bit XOR (\texttt{\^{}}), OR (\texttt{|}) e AND (\texttt{\&}), respectivamente, entre as entradas 
+    \texttt{a} e \texttt{b}.
+
+    \item \textbf{ALU\_SRL} e \textbf{ALU\_SRA}: Realizam operações de deslocamento para a direita. 
+    \textbf{ALU\_SRL} (\textit{shift right logical}) insere zeros à esquerda, enquanto 
+    \textbf{ALU\_SRA} (\textit{shift right arithmetic}) mantém o bit de sinal, 
+    o que é crucial para operações com números negativos.
+\end{itemize}
+
+Além do resultado principal, a ULA também gera o sinal \texttt{Zero}. 
+Este sinal é ativado (1) sempre que o resultado (\texttt{Result}) da operação for igual a zero 
+(\texttt{Result == 32'd0}). 
+Essa saída é fundamental para a implementação de desvios condicionais no processador, 
+como as instruções do tipo \texttt{branch} (e.g., \texttt{beq} -- \textit{branch on equal}), 
+que precisam saber se o resultado de uma comparação foi zero.
+
+
+\subsubsection{Banco de Registradores}
+
+O banco de registradores (Register File) é uma memória interna de alta velocidade que armazena os dados de trabalho do processador. Para a especificação RV32E, ele é composto por 16 registradores de 32 bits (de x0 a x15). O registrador x0 é especial, pois seu valor é sempre zero, uma característica fundamental da arquitetura RISC-V.
+
+O módulo possui duas portas de leitura paralelas e assíncronas (para rs1 e rs2) e uma porta de escrita síncrona (para rd). A escrita ocorre apenas na borda de subida do clock e quando o sinal de controle RegWrite está ativo.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_banco_registradores.png}
+    \caption{Codigo fonte do banco de registradores}
+    \label{fig:banco_registradores}
+\end{figure}
+
+Analisando o código-fonte da Figura~\ref{fig:banco_registradores}, vemos como essas características são implementadas:
+
+\begin{enumerate}
+    \item \textbf{Estrutura e Parametrização:} 
+    O módulo \texttt{register\_file} é projetado de forma genérica, utilizando parâmetros 
+    \texttt{WIDTH = 32} e \texttt{DEPTH = 32}. Isso define uma estrutura padrão de 32 registradores de 32 bits, 
+    compatível com a arquitetura RV32I. Para o RV32E, ele seria instanciado com uma profundidade de 16. 
+    O armazenamento principal é realizado pelo vetor de registradores:
+    \begin{verbatim}
+reg [WIDTH-1:0] regs [0:DEPTH-1];
+    \end{verbatim}
+
+    \item \textbf{Portas de Leitura Assíncronas:} 
+    As duas portas de leitura são implementadas com as instruções \texttt{assign} nas linhas 40 e 41. 
+    Por serem atribuições contínuas, criam um circuito puramente combinacional. 
+    Assim, sempre que os endereços \texttt{rs1} ou \texttt{rs2} mudam, os dados correspondentes 
+    são disponibilizados imediatamente nas saídas \texttt{read\_data\_1} e \texttt{read\_data\_2}, 
+    sem necessidade de esperar um pulso de clock.
+
+    \item \textbf{Porta de Escrita Síncrona:} 
+    A lógica de escrita e reset está contida no bloco:
+    \begin{verbatim}
+always @(posedge clk or posedge rst)
+    \end{verbatim}
+    A sensibilidade à \texttt{posedge clk} garante que qualquer escrita no banco de registradores 
+    só aconteça exatamente na borda de subida do clock, tornando a operação síncrona.
+
+    \item \textbf{Implementação do Registrador \texttt{x0} (Zero):} 
+    O código garante que o registrador \texttt{x0} seja sempre zero de três formas:
+    \begin{enumerate}
+    \item \textbf{Na Escrita:}  
+    A condição \texttt{if (rw \&\& rd != 5'd0)} impede qualquer operação de escrita 
+    caso o registrador de destino (\texttt{rd}) seja o de endereço 0.
+
+    \item \textbf{Na Leitura:}  
+    As linhas 40 e 41 usam um operador ternário para verificar se o endereço de leitura 
+    (\texttt{rs1} ou \texttt{rs2}) é 0. Nesse caso, o valor 0 é retornado diretamente, 
+    em vez de ler \texttt{regs[0]}.
+
+    \item \textbf{No Reset:}  
+    O laço \texttt{for} na lógica de reset inicia em \texttt{i = 1}, zerando todos 
+    os registradores exceto \texttt{regs[0]}.
+\end{enumerate}
+
+    \item \textbf{Reset Assíncrono:} 
+    A lista de sensibilidade do bloco \texttt{always} inclui \texttt{posedge rst}, 
+    caracterizando um reset assíncrono. Se o sinal \texttt{rst} for ativado, o banco de registradores 
+    entra no estado de reset imediatamente, zerando os registradores de \texttt{x1} a \texttt{x15} (ou \texttt{x31}), 
+    independentemente do clock.
+\end{enumerate}
+
+
+
+\subsubsection{PC Generator}
+O PC Generator é o circuito responsável por selecionar o endereço da próxima instrução que será enviada para o estágio de Busca (Fetch). Ele garante o fluxo de execução correto do programa, seja de forma sequencial ou através de desvios e saltos.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_pcgenerator.png}
+    \caption{Codigo fonte do PC Generator}
+    \label{fig:pc_generator}
+\end{figure}
+
+
+Este sistema é composto por duas partes principais: uma lógica de seleção (geralmente um multiplexador) e o registrador do Contador de Programa (PC) propriamente dito. O código-fonte apresentado na imagem~\ref{fig:pc_generator} implementa este último componente: o registrador PC.
+
+Analisando o módulo \texttt{pc\_generator}, podemos observar o seu comportamento:
+
+\begin{itemize}
+    \item \textbf{Armazenamento Síncrono:} O módulo é, em sua essência, um registrador de 32 bits. Sua função é armazenar o endereço da instrução a ser buscada (\texttt{pc\_out}). A atualização desse valor é síncrona, ocorrendo apenas na borda de subida do clock (\texttt{posedge clk}), conforme definido no bloco \texttt{always}.
+
+    \item \textbf{Entrada do Próximo PC:} A entrada \texttt{pc\_in} fornece o endereço que será carregado no PC no próximo ciclo de clock. Como indicado no comentário do código (\texttt{// Vem do MUX (PC + 4, branch, jump...)}), este sinal é o resultado da lógica de seleção que acontece externamente ao módulo. É nesse multiplexador que a decisão sobre qual será o próximo endereço (seja o sequencial \texttt{PC+4} ou um endereço de desvio/salto) é tomada.
+
+    \item \textbf{Reset Assíncrono:} O registrador possui uma lógica de reset assíncrono. Se o sinal \texttt{rst} for ativado (\texttt{1}), o PC é imediatamente forçado para o valor 0 (\texttt{pc\_out <= 32'b0;}). Isso garante que, ao ligar ou resetar o processador, a execução sempre começará a partir do endereço de memória inicial.
+\end{itemize}
+
+\subsection{Unidade de Controle}
+A Unidade de Controle é o cérebro do processador como pode ser visto na imagem~\ref{fig:control_unit}. Sua função é decodificar a instrução e gerar os sinais de controle necessários para governar as ações dos componentes do caminho de dados. Esse processo de decodificação geralmente ocorre em dois níveis para simplificar a lógica.
+
+\begin{itemize}
+    \item \textbf{Decodificador Principal:} Analisa o \texttt{opcode} da instrução para determinar sua categoria (aritmética, acesso à memória, desvio, etc.). A partir disso, gera um conjunto de sinais de alto nível que habilitam ou desabilitam as principais partes do processador:
+    \begin{itemize}
+        \item \texttt{RegWrite}: permite a escrita no banco de registradores
+        \item \texttt{MemRead} / \texttt{MemWrite}: controlam o acesso à memória de dados
+        \item \texttt{ALUSrc}: seleciona a segunda entrada da ULA (registrador ou valor imediato)
+        \item \texttt{Branch}: indica uma instrução de desvio
+    \end{itemize}
+
+    \item \textbf{ALU Control:} Unidade de controle específica que refina a ação a ser executada. Combina um sinal geral vindo do decodificador principal (\texttt{ALUOp}) com os campos \texttt{func3} e \texttt{func7} da instrução para gerar o comando exato que a ULA deve realizar (soma, subtração ou operação lógica).  
+
+\end{itemize}
+
+Essa abordagem em dois estágios torna o projeto mais modular e eficiente. Juntos, esses sinais orquestram o fluxo de dados através do processador, garantindo que cada instrução seja executada corretamente.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{control_unit.png}
+    \caption{Unidade de Controle}
+    \label{fig:control_unit}
+\end{figure}
+
+
+\subsubsection{Controle Principal}
+A unidade de controle principal é um bloco combinacional que recebe como entrada principal o opcode da instrução e gera os sinais que determinam o comportamento dos demais componentes.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_control_unit.png}
+    \caption{Codigo Fonte da Unidade de Controle Principal}
+    \label{fig:codigo_control_unit}
+\end{figure}
+
+Como pode ser visto na figura~\ref{fig:codigo_control_unit} o módulo \texttt{control\_unit} utiliza um bloco \texttt{always @(*)} para garantir que as saídas reajam instantaneamente a qualquer mudança no \textit{opcode} de entrada. Dentro deste bloco, a lógica central é uma grande estrutura \texttt{case (opcode)}, que funciona como o decodificador principal da instrução.
+
+O processo de decodificação funciona da seguinte forma:
+
+\begin{enumerate}
+    \item \textbf{Valores Padrão:} No início do bloco \texttt{always}, todos os sinais de controle são inicializados com um valor padrão, geralmente 0 (desativado). Isso garante que, por padrão, nenhuma operação de escrita em registrador, acesso à memória ou desvio ocorra. Os sinais só são ativados se o \textit{opcode} corresponder a uma instrução que necessite daquela funcionalidade.
+
+    \item \textbf{Decodificação por opcode:} O \texttt{case} compara o \textit{opcode} de entrada com os padrões definidos pela arquitetura RISC-V para cada tipo de instrução e ativa os sinais de controle apropriados:
+    \begin{itemize}
+        \item \textbf{Instruções R-type (\texttt{7'b0110011}):} Ativa o sinal \texttt{RegWrite} para que o resultado da ULA seja salvo no banco de registradores. O sinal \texttt{ALUSrc} é mantido em 0 (padrão), fazendo com que a ULA use dois registradores como operandos. O \texttt{ALUOp} é configurado para \texttt{2'b10}, indicando ao módulo \texttt{ALU Control} que a operação específica será definida pelos campos \texttt{funct3}/\texttt{funct7}.
+        
+        \item \textbf{Instruções Load (\texttt{7'b0000011}):} Ativa \texttt{RegWrite} e \texttt{MemRead}. Além disso, aciona \texttt{ALUSrc} para que a ULA some o registrador base com o imediato a fim de calcular o endereço, e \texttt{MemtoReg} para que o dado lido da memória (e não o resultado da ULA) seja gravado no banco de registradores.
+        
+        \item \textbf{Instruções Store (\texttt{7'b0100011}):} Ativa \texttt{ALUSrc} para o cálculo do endereço (similar ao Load), mas, em vez de ler, ativa \texttt{MemWrite} para escrever o dado do segundo registrador na memória. O \texttt{RegWrite} permanece desativado, pois a instrução de \textit{store} não altera o banco de registradores.
+        
+        \item \textbf{Instruções Branch (\texttt{7'b1100011}):} Ativa o sinal \texttt{Branch}, que habilita a lógica de desvio condicional. O \texttt{ALUOp} é definido como \texttt{2'b01} para instruir a ULA a realizar uma subtração para a comparação, sem qualquer escrita em registrador ou memória.
+        
+        \item \textbf{Instruções de Salto (JAL/JALR):} Ativam o sinal \texttt{Jump} para indicar um desvio incondicional e \texttt{RegWrite} para salvar o endereço de retorno (\texttt{PC+4}) no registrador de destino.
+    \end{itemize}
+\end{enumerate}
+
+Essa implementação mapeia diretamente o conjunto de instruções da arquitetura para os sinais de hardware necessários para orquestrar as operações no caminho de dados a cada ciclo de clock.
+
+\subsubsection{Controle da ULA}
+O controle da ULA (ALU Control) é um segundo bloco combinacional que gera o sinal final (ALU Control) para a ULA, utilizando o sinal ALUOp da unidade principal e os campos funct3 e funct7 da instrução.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_alu_control.png}
+    \caption{Codigo Fonte da Unidade de Controle da ULA}
+    \label{fig:ula_control}
+\end{figure}
+
+Analisando o código do módulo \texttt{alu\_control}, vemos que ele recebe o sinal \texttt{ALUOp} (2 bits) da unidade de controle principal e um sinal \texttt{Funct} (10 bits), que combina o \texttt{funct7} e o \texttt{funct3} da instrução. A sua função é traduzir esses sinais de alto nível na operação específica de 4 bits que a ULA deve executar.
+
+A lógica é implementada com uma estrutura de \texttt{case} aninhada dentro de um bloco combinacional \texttt{always @(*)}:
+
+\begin{enumerate}
+    \item \textbf{Seleção por Categoria (\texttt{case (ALUOp)}):}  
+    O \texttt{case} externo seleciona o modo de operação com base no sinal \texttt{ALUOp} vindo do controle principal:
+    \begin{itemize}
+        \item \texttt{ALUOp = 2'b00}: Corresponde a instruções de \textit{load}, \textit{store} ou \texttt{AUIPC}. Nessas operações, a ULA é sempre usada para fazer uma soma (para calcular o endereço de memória ou somar ao PC). Portanto, a saída \texttt{Op} é diretamente definida como \texttt{ALU\_ADD}.
+        
+        \item \texttt{ALUOp = 2'b01}: Usado para instruções de \textit{branch}. Um \texttt{case} interno no campo \texttt{Funct[2:0]} (o \texttt{funct3}) é usado para determinar a comparação a ser feita.  
+        Para \texttt{beq} e \texttt{bne} (\texttt{funct3 = 3'b000}), a operação é \texttt{ALU\_SUB}.  
+        Para \texttt{blt}/\texttt{bge} (\texttt{funct3 = 3'b100}, \texttt{3'b101}, etc.), as operações são \texttt{ALU\_SLT} ou \texttt{ALU\_SLTU}.
+        
+        \item \texttt{ALUOp = 2'b10}: Indica uma instrução \textit{R-type}. Este é o caso mais complexo, onde a \textit{ALU Control} precisa usar \texttt{funct3} e, às vezes, um bit de \texttt{funct7} para determinar a operação exata:
+        \begin{itemize}
+            \item Para \texttt{funct3 = 3'b000}, o bit \texttt{Funct[9]} (correspondente ao bit 30 da instrução) diferencia entre \texttt{ADD} (0) e \texttt{SUB} (1).
+            \item Para \texttt{funct3 = 3'b101}, o mesmo bit diferencia entre deslocamento lógico \texttt{SRL} (0) e aritmético \texttt{SRA} (1).
+            \item Para outros valores, como \texttt{3'b111} (\texttt{AND}), \texttt{3'b110} (\texttt{OR}) e \texttt{3'b100} (\texttt{XOR}), a operação é definida diretamente.
+        \end{itemize}
+        
+        \item \texttt{ALUOp = 2'b11}: Corresponde a instruções \textit{I-type} (aritméticas com imediato). A lógica é semelhante à do \textit{R-type}, mas aqui o \texttt{case} interno em \texttt{funct3} define operações como \texttt{ADDI}, \texttt{SLTI}, \texttt{XORI}, etc.
+    \end{itemize}
+\end{enumerate}
+
+Em resumo, a \textit{ALU Control} atua como um decodificador especializado. Ela recebe uma ``dica'' da unidade de controle principal (\texttt{ALUOp}) sobre qual família de instruções está sendo executada e, em seguida, analisa os campos de função da instrução para determinar e enviar o comando preciso que a ULA deve executar.
+
+\subsection{Tratamento de Hazards no Pipeline}
+Em uma arquitetura pipeline, podem ocorrer conflitos conhecidos como hazards (riscos), que impedem que a próxima instrução seja executada no ciclo de clock seguinte. O tratamento adequado desses hazards é fundamental para garantir a correção e o desempenho do processador. Esta seção descreve as unidades de hardware dedicadas a essa tarefa.
+
+\subsubsection{Unidade de Forwarding (Adiantamento)}
+A Unidade de Forwarding, ou Forwarding Unit, é responsável por resolver a maioria dos hazards de dados. Este tipo de hazard ocorre quando uma instrução precisa de um resultado que ainda não foi escrito de volta no banco de registradores por uma instrução anterior. Em vez de parar o pipeline (stall), a unidade de forwarding identifica essa dependência e "adianta" o resultado diretamente da saída dos estágios EX ou MEM para a entrada da ULA, evitando a espera.
+
+A lógica compara os registradores de origem (rs1, rs2) da instrução no estágio ID com os registradores de destino (rd) das instruções nos estágios EX e MEM.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_forwarding_unit.png}
+    \caption{Codigo Fonte da Unidade de Forward}
+    \label{fig:forwarding_unit}
+\end{figure}
+
+Analisando a imagem~\ref{fig:forwarding_unit}, podemos ver essa lógica em ação. 
+O módulo é um bloco puramente combinacional que gera dois sinais de controle, \texttt{ForwardA} e \texttt{ForwardB}, que controlarão os multiplexadores na entrada da ULA.
+
+A lógica de decisão está dividida em duas partes idênticas, uma para cada operando da ULA (\texttt{rs1} e \texttt{rs2}):
+
+\begin{enumerate}
+    \item \textbf{Lógica para \texttt{ForwardA} (operando vindo de rs1):}  
+    O código implementa uma cadeia de prioridade para decidir de onde o dado deve vir:
+    \begin{itemize}
+        \item \textbf{Prioridade 1 -- Adiantamento do Estágio MEM:}  
+        A primeira condição verifica se:
+        \begin{itemize}
+            \item A instrução no estágio MEM vai escrever em um registrador (\texttt{MEM\_RegWrite == 1});
+            \item O registrador de destino não é o \texttt{x0} (que não pode ser modificado);
+            \item O registrador de destino da instrução em MEM (\texttt{MEM\_rd}) é o mesmo que o registrador de origem da instrução em EX (\texttt{EX\_rs1}).
+        \end{itemize}
+        Se todas as condições forem verdadeiras, \texttt{ForwardA} é definido como \texttt{2'b10}, instruindo o multiplexador na entrada da ULA a selecionar o resultado vindo do estágio MEM.
+        
+        \item \textbf{Prioridade 2 -- Adiantamento do Estágio WB:}  
+        Se a primeira condição for falsa, verifica-se uma dependência com o estágio de Escrita (WB).  
+        As condições são as mesmas, mas comparando \texttt{WB\_RegWrite} e \texttt{WB\_rd} com \texttt{EX\_rs1}.  
+        Se houver dependência, \texttt{ForwardA} é definido como \texttt{2'b01}, sinalizando para o multiplexador usar o resultado do estágio WB.
+        
+        \item \textbf{Sem Adiantamento:}  
+        Se nenhuma das condições anteriores for atendida, significa que não há \textit{hazard} de dados para este operando. Assim, \texttt{ForwardA} é definido como \texttt{2'b00}, e a ULA usará o valor lido normalmente do banco de registradores.
+    \end{itemize}
+    
+    \item \textbf{Lógica para \texttt{ForwardB} (operando vindo de rs2):}  
+    As linhas correspondentes replicam a mesma lógica de prioridade, mas desta vez comparando \texttt{MEM\_rd} e \texttt{WB\_rd} com o segundo registrador de origem da instrução em EX (\texttt{EX\_rs2}).
+\end{enumerate}
+
+A ordem das verificações (\texttt{if} / \texttt{else if}) é crucial.  
+A unidade sempre prioriza o adiantamento do estágio MEM sobre o WB, pois o resultado no estágio MEM é de uma instrução mais recente no pipeline, sendo, portanto, o valor mais atualizado disponível.
+
+\subsubsection{Unidade de Detecção de Hazards}
+A Unidade de Detecção de Hazards (Hazard Detection Unit) é responsável por identificar situações que não podem ser resolvidas apenas por forwarding e que exigem uma parada (stall) do pipeline. A principal situação é o hazard de load-use, que ocorre quando uma instrução tenta usar um dado que está sendo carregado da memória pela instrução imediatamente anterior (ex: lw x5, 0(x2) seguido por add x6, x5, x7).
+
+Quando um hazard de load-use é detectado no estágio ID, esta unidade força uma bolha no pipeline. Isso é feito ao desabilitar a atualização do PC e do registrador de pipeline IF/ID por um ciclo, efetivamente "congelando" os estágios IF e ID enquanto uma instrução nop (bolha) é inserida no estágio EX.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_hazard_detection.png}
+    \caption{Codigo Fonte do Controle de Hazard}
+    \label{fig:hazard_detection}
+\end{figure}
+
+O código-fonte da imagem~\ref{fig:hazard_detection} implementa essa lógica de forma concisa. 
+Ele é um bloco puramente combinacional que gera um único sinal de saída, \texttt{stall}. 
+A lógica para ativar este sinal, contida na linha correspondente do código, implementa exatamente as condições de um \textit{hazard} do tipo \textit{load-use}:
+
+\begin{itemize}
+    \item \textbf{A instrução é um \textit{load} no estágio EX:}  
+    Isso é verificado pelo sinal \texttt{id\_ex\_mem\_read}.  
+    Se este sinal estiver ativo, significa que a instrução que acabou de passar pelo estágio ID e agora está no EX é uma instrução de leitura da memória (por exemplo, \texttt{lw}).
+
+    \item \textbf{O destino do \textit{load} é um dos operandos da instrução atual:}  
+    A expressão \texttt{(id\_ex\_rd\_addr == if\_id\_rs1\_addr) || (id\_ex\_rd\_addr == if\_id\_rs2\_addr)} verifica se o registrador de destino da instrução de \textit{load} (\texttt{id\_ex\_rd\_addr}) é o mesmo que um dos registradores fonte (\texttt{if\_id\_rs1\_addr} ou \texttt{if\_id\_rs2\_addr}) da instrução que está logo atrás, no estágio ID.
+\end{itemize}
+
+Essencialmente, a unidade está verificando:  
+\textit{``A instrução no estágio EX está lendo da memória para um registrador que a instrução no estágio ID precisa usar agora?''}
+
+Se a resposta for afirmativa, o sinal \texttt{stall} é ativado.  
+Este sinal é então usado pela lógica de controle do pipeline para parar os estágios IF e ID por um ciclo, permitindo que a instrução de \textit{load} avance para o estágio MEM.  
+Após esse ciclo de espera, o dado carregado da memória estará pronto para ser adiantado (\textit{forwarded}) para a instrução seguinte, que foi mantida no estágio ID e agora pode prosseguir sem problemas.
+
+\subsubsection{Unidade de Desvio (Branch Unit)}
+
+A Unidade de Desvio é um componente fundamental no estágio de Execução, responsável por implementar a lógica dos desvios condicionais, como beq (branch on equal) e bne (branch on not equal). Sua principal função é determinar se um desvio deve ou não ser tomado e, em caso afirmativo, calcular o endereço de destino desse desvio.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_branch_unit.png}
+    \caption{Codigo fonte da Branch Unit}
+    \label{fig:branch_unit}
+\end{figure}
+
+Analisando o código da imagem~\ref{fig:branch_unit} o módulo \texttt{branch\_unit} recebe diversas informações do estágio anterior (ID/EX), tais como:
+
+\begin{itemize}
+    \item PC da instrução: \texttt{id\_ex\_pc}
+    \item Dados dos registradores a serem comparados: \texttt{id\_ex\_rs1\_data} e \texttt{id\_ex\_rs2\_data}
+    \item Valor imediato para o cálculo do desvio: \texttt{id\_ex\_immediate}
+    \item Sinais de controle: \texttt{id\_ex\_control\_signals}
+\end{itemize}
+
+O comportamento da unidade é implementado em um bloco combinacional \texttt{always @(*)}, que realiza as seguintes ações:
+
+\begin{itemize}
+    \item \textbf{Avaliação da Condição de Desvio:} A lógica principal para os desvios condicionais reside em um \texttt{case} que avalia o campo \texttt{funct3} da instrução. Para cada tipo de desvio, é realizada uma comparação entre \texttt{id\_ex\_rs1\_data} e \texttt{id\_ex\_rs2\_data}:
+    \begin{itemize}
+        \item \textbf{BRANCH\_EQ (beq)}: Verifica a igualdade (\texttt{==}).
+        \item \textbf{BRANCH\_NE (bne)}: Verifica a desigualdade (\texttt{!=}).
+        \item \textbf{BRANCH\_LT / BRANCH\_LTU (blt/bltu)}: Compara se o primeiro operando é menor que o segundo, considerando valores com sinal (\$signed) e sem sinal.
+        \item \textbf{BRANCH\_GE / BRANCH\_GEU (bge/bgeu)}: Verifica se o primeiro operando é maior ou igual ao segundo, tanto com sinal quanto sem sinal.
+    \end{itemize}
+    Se a condição for verdadeira, o sinal de saída \texttt{pc\_src} é ativado (\texttt{1'b1}), indicando à próxima etapa do processador que o desvio deve ser tomado.
+
+    \item \textbf{Cálculo do Endereço de Destino:} Caso um desvio seja tomado (\texttt{pc\_src = 1'b1}) ou se a instrução for um salto (\texttt{is\_jump}), a unidade calcula o endereço de destino somando o PC da instrução atual (\texttt{id\_ex\_pc}) com o valor do imediato (\texttt{id\_ex\_immediate}). O resultado é colocado na saída \texttt{new\_pc}.
+
+    \item \textbf{Sinalização de Bolha (Flush):} Quando um desvio é tomado ou um salto ocorre, as instruções que já entraram no pipeline sequencialmente (como a instrução em \texttt{PC+4}) estão incorretas e precisam ser descartadas. O módulo \texttt{branch\_unit} gera o sinal \texttt{flush} para indicar que essas instruções devem ser invalidadas (transformadas em "bolhas").
+
+\end{itemize}
+
+\subsection{Sistema de Memória}
+O processador interage com dois blocos de memória principais: a memória de instruções, de onde as instruções são buscadas, e a memória de dados, usada para operações de carga (\textit{load}) e armazenamento (\textit{store}).
+
+\subsubsection{Memória de Instruções}
+A memória de instruções é uma memória somente de leitura (do ponto de vista do processador) que armazena o programa a ser executado. Ela recebe um endereço de 32 bits do Contador de Programa (PC) e retorna a instrução de 32 bits correspondente de forma assíncrona.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_instruction_memory.png}
+    \caption{Codigo Fonte da Memória de Instruções}
+    \label{fig:instruction_memory}
+\end{figure}
+
+A partir do código da Figura~\ref{fig:instruction_memory}, podemos ver exatamente como essas características são implementadas:
+
+\begin{enumerate}
+    \item \textbf{Estrutura Parametrizada:}  
+    O módulo é definido com parâmetros que o tornam flexível:  
+    \texttt{WIDTH} confirma a largura de 32 bits para cada instrução,  
+    \texttt{DEPTH} define a capacidade total de armazenamento (neste caso, 256 instruções),  
+    e \texttt{INIT\_FILE} permite especificar um arquivo de inicialização para pré-carregar o programa.
+
+    \item \textbf{Leitura Assíncrona (Combinacional):}  
+    A operação de leitura é implementada com a instrução \texttt{assign}, criando um circuito puramente combinacional.  
+    Isso significa que não há necessidade de um sinal de clock para a leitura:  
+    a saída \texttt{instr} é atualizada instantaneamente sempre que a entrada \texttt{instr\_addr} muda,  
+    garantindo a velocidade necessária para o estágio de busca (\textit{fetch}) do processador.
+
+    \item \textbf{Conversão de Endereço:}  
+    A lógica de endereçamento \texttt{memory[instr\_addr[31:2]]} é um detalhe crucial.  
+    O \texttt{PC} fornece um endereço de byte, mas como cada instrução RISC-V ocupa 4 bytes (32 bits),  
+    a memória interna é organizada por palavras.  
+    A expressão \texttt{instr\_addr[31:2]} seleciona os bits 31 a 2 do endereço, equivalente a uma divisão por 4,  
+    convertendo o endereço de byte do \texttt{PC} para o índice de palavra correto.
+
+    \item \textbf{Inicialização em Simulação:}  
+    O bloco \texttt{initial} é usado apenas em simulação.  
+    Ele verifica se um caminho de arquivo foi fornecido em \texttt{INIT\_FILE} e, caso afirmativo,  
+    utiliza a função de sistema \texttt{\$readmemh} para ler um arquivo de texto contendo o programa em formato hexadecimal,  
+    carregando-o na memória antes do início da simulação.  
+    É assim que o ``software'' é inserido no ``hardware'' para teste e verificação.
+\end{enumerate}
+
+\subsubsection{Memória de Dados}
+A memória de dados armazena as variáveis e estruturas de dados utilizadas pelo programa. Ela suporta tanto operações de leitura quanto de escrita, controladas pelos sinais \texttt{MemRead} e \texttt{MemWrite}. A escrita é síncrona, ocorrendo na borda de subida do clock para evitar condições de corrida.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_data_memory.png}
+    \caption{Codigo Fonte da Memória de Dados}
+    \label{fig:data_memory}
+\end{figure}
+
+O código-fonte da imagem~\ref{fig:data_memory} implementa essa funcionalidade de forma clara, 
+separando a lógica de leitura e escrita para atender aos requisitos de um pipeline de processador:
+
+\begin{enumerate}
+    \item \textbf{Portas de Interface:}  
+    O módulo possui portas para o endereço (\texttt{mem\_addr}),  
+    o dado a ser escrito (\texttt{write\_data}) e o dado lido (\texttt{read\_data}).  
+    Crucialmente, ele recebe os sinais de controle \texttt{mem\_read} e \texttt{mem\_write} da Unidade de Controle,  
+    além de um sinal de \texttt{clk} para sincronização.
+
+    \item \textbf{Escrita Síncrona:}  
+    A operação de escrita é implementada dentro de um bloco \texttt{always @(posedge clk)},  
+    tornando-a síncrona.  
+    A escrita na memória (\texttt{memory[word\_addr] <= write\_data;}) só acontece se:
+    \begin{itemize}
+        \item Ocorre uma borda de subida no clock;
+        \item O sinal de controle \texttt{mem\_write} está ativo (\texttt{1}).
+    \end{itemize}
+    Essa abordagem garante que a escrita na memória ocorra em um ponto bem definido do ciclo de clock,  
+    evitando instabilidades e condições de corrida com outras operações, como a leitura.
+
+    \item \textbf{Leitura Combinacional:}  
+    A lógica de leitura é implementada em um bloco \texttt{always @(*)},  
+    caracterizando-a como combinacional (assíncrona).  
+    \begin{itemize}
+        \item Se o sinal \texttt{mem\_read} estiver ativo (\texttt{1}),  
+        a saída \texttt{read\_data} recebe o valor da posição de memória endereçada por \texttt{word\_addr};
+        \item Caso contrário, a saída é mantida em zero.
+    \end{itemize}
+    A leitura combinacional permite que o dado esteja disponível no mesmo ciclo em que é solicitado,  
+    compatível com o estágio de Acesso à Memória (MEM) do pipeline.
+
+    \item \textbf{Endereçamento de Palavra:}  
+    Assim como na memória de instruções, o endereço de byte (\texttt{mem\_addr}) vindo da ULA  
+    é convertido para um endereço de palavra (\texttt{word\_addr}),  
+    selecionando os bits superiores para indexar corretamente o vetor de memória.
+\end{enumerate}
+
+\subsection{Implementação dos Estágios do Pipeline}
+A implementação do pipeline é realizada através de uma série de registradores intermediários que separam os cinco estágios. Cada um desses módulos sequenciais é responsável por capturar e armazenar os resultados de um estágio ao final de um ciclo de clock, disponibilizando-os como entrada para o estágio seguinte no próximo ciclo. Essa estrutura garante a sincronização e o fluxo correto de dados e sinais de controle através do processador.
+
+\subsubsection{Registrador IF/ID}
+Ao final do estágio de Busca, a instrução lida da memória e o endereço da próxima instrução (PC+4) são capturados pelo registrador IF/ID. Este módulo garante que esses valores sejam passados de forma estável para o estágio de Decodificação no próximo ciclo de clock.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_if_id.png}
+    \caption{Codigo Fonte do Registrador IF/ID}
+    \label{fig:if_id}
+\end{figure}
+
+
+O código Verilog da imagem~\ref{fig:if_id} mostra que o registrador IF/ID, além de simplesmente armazenar dados, ele desempenha um papel ativo no controle do pipeline, respondendo aos sinais \texttt{rst}, \texttt{flush} e \texttt{stall}.  
+A lógica síncrona implementada no bloco \texttt{always} define seu comportamento de acordo com 
+diferentes situações do ciclo de clock.
+
+Durante o \textbf{reset} (\texttt{if (rst)}), o registrador é limpo, forçando as saídas 
+\texttt{pc\_out} e \texttt{instr\_out} a zero.  
+Esse procedimento garante que, na inicialização do processador, o estado seja conhecido e válido, 
+evitando a propagação de instruções indesejadas para os estágios seguintes.
+
+No caso de um \textbf{flush} (\texttt{else if (flush)}), geralmente causado por uma instrução de 
+desvio tomada em um estágio posterior, a instrução buscada logo após o desvio --- conhecida como 
+\textit{branch delay slot instruction} --- precisa ser descartada.  
+O sinal \texttt{flush} aciona a lógica que zera o conteúdo do registrador, inserindo o valor 
+\texttt{0x00000000} (normalmente associado a uma \texttt{nop} ou instrução inválida) no estágio ID.  
+Dessa forma, a instrução incorreta é efetivamente anulada antes de ser decodificada.
+
+Em condições normais de operação (\texttt{else if (!stall)}), quando não há atrasos no pipeline, 
+o registrador captura os valores de entrada \texttt{pc\_in} e \texttt{instr\_in}, armazenando-os 
+em \texttt{pc\_out} e \texttt{instr\_out}, respectivamente.  
+Assim, a instrução buscada no estágio IF avança para o estágio ID de forma contínua.
+
+O \textbf{stall}, por sua vez, é tratado de forma implícita.  
+Quando o sinal está ativo, nenhuma das condições anteriores é satisfeita e, consequentemente, 
+o registrador mantém seus valores atuais.  
+Isso impede que uma nova instrução (potencialmente causadora de hazard) entre no estágio ID e, ao 
+mesmo tempo, permite que o Contador de Programa (\texttt{PC}) seja congelado.  
+Como resultado, a mesma instrução será buscada novamente no próximo ciclo, garantindo a correta 
+sincronização e resolução do hazard antes da retomada do fluxo normal do pipeline.
+
+\subsubsection{Registrador ID/EX}
+Após a decodificação da instrução e a leitura dos operandos, o registrador ID/EX armazena uma grande quantidade de informações para o estágio de Execução. Isso inclui todos os sinais de controle, os valores lidos do banco de registradores, o imediato estendido e os índices dos registradores (\texttt{rs1}, \texttt{rs2}, \texttt{rd}).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_id_ex.png}
+    \caption{Codigo Fonte do Registrador ID/EX}
+    \label{fig:id_ex}
+\end{figure}
+
+
+O código da imagem~\ref{fig:id_ex} revela que este componente vai além de um simples 
+armazenamento: ele é um elemento ativo no controle do fluxo do pipeline, respondendo 
+a sinais de \texttt{stall} e \texttt{flush}. Sua operação síncrona, definida por um bloco 
+\texttt{always @(posedge clk or posedge rst)}, apresenta comportamentos distintos conforme 
+as condições de controle.
+
+Na \textbf{operação normal}, quando o sinal \texttt{stall} está inativo (\texttt{!stall}), 
+o registrador cumpre sua função principal. Na borda de subida do clock, ele captura todos 
+os dados e sinais de controle provenientes do estágio de Decodificação (prefixo \texttt{id\_}) 
+e os propaga para suas saídas, que alimentarão o estágio de Execução (prefixo \texttt{ex\_}). 
+Entre esses dados estão os valores lidos (\texttt{id\_read\_data\_1}, \texttt{id\_read\_data\_2}), 
+o valor do PC (\texttt{id\_pc\_out}), o imediato (\texttt{id\_imm\_data}) e todos os sinais gerados 
+pela Unidade de Controle.
+
+Quando ocorre \textbf{reset ou flush} (\texttt{if (rst || flush)}), seja por inicialização ou 
+por uma instrução de desvio tomada no estágio \texttt{EX}, o registrador anula a instrução recém-decodificada, 
+forçando todas as suas saídas a zero. Mais importante, todos os sinais de controle 
+(\texttt{ex\_RegWrite}, \texttt{ex\_MemWrite}, etc.) são desativados. Esse procedimento insere 
+uma bolha (\texttt{nop}) no estágio de Execução, garantindo que a instrução descartada não 
+produza efeitos indevidos.
+
+No caso de um \textbf{stall}, quando a Unidade de Detecção de Hazards ativa o sinal 
+\texttt{stall}, a condição \texttt{if (!stall)} não é satisfeita. Como não há um bloco 
+\texttt{else}, o registrador mantém seus valores atuais, ignorando as novas entradas 
+provenientes do estágio \texttt{ID}. Dessa forma, a instrução permanece no estágio de 
+Decodificação até que o dado necessário esteja disponível para ser adiantado 
+(\textit{forwarded}), o que é fundamental para resolver o hazard de \textit{load-use}.
+
+\subsubsection{Registrador EX/MEM}
+O registrador EX/MEM serve como ponte para o estágio de Memória. Ele armazena o resultado calculado pela ULA (seja um valor aritmético ou um endereço de memória), o dado a ser escrito na memória (no caso de uma instrução \textit{store}), e os sinais de controle relevantes para os estágios MEM e WB.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_ex_mem.png}
+    \caption{Codigo Fonte do Registrador EX/MEM}
+    \label{fig:ex_mem}
+\end{figure}
+
+Analisando o código da imagem~\ref{fig:ex_mem}, observa-se que ele é um registrador síncrono que 
+atualiza seus valores na borda de subida do clock (\texttt{posedge clk}) e incorpora uma lógica 
+de controle capaz de lidar com diferentes situações do pipeline.
+
+Na \textbf{operação normal}, quando não há sinais de controle como \texttt{stall} ou \texttt{flush}, 
+o registrador cumpre sua função primária: capturar os resultados do estágio de Execução. 
+Assim, na borda de subida do clock, os valores das entradas (\texttt{ex\_result}, 
+\texttt{ex\_read\_data\_2\_mux}, \texttt{ex\_rd}, etc.) são transferidos para as saídas correspondentes 
+(\texttt{mem\_addr}, \texttt{mem\_write\_data}, \texttt{mem\_rd}, etc.). 
+Esse mecanismo garante que os dados e os sinais de controle da instrução avancem de forma sincronizada 
+para o estágio \texttt{MEM}.
+
+Quando ocorre \textbf{reset ou flush}, a lógica implementada na linha 45 
+(\texttt{if (rst || flush)}) assume prioridade máxima. 
+Caso um reset seja acionado ou a unidade de controle sinalize um flush — normalmente em consequência 
+de um desvio ou salto tomado —, o registrador anula a instrução em processamento. 
+Isso é feito zerando todos os campos de dados e desativando todos os sinais de controle 
+(\texttt{mem\_Branch}, \texttt{mem\_MemWrite}, \texttt{mem\_RegWrite}, etc.). 
+Essa operação insere uma ``bolha'' (\texttt{nop}) no pipeline, prevenindo que a instrução 
+invalidada produza qualquer efeito nos estágios seguintes.
+
+No caso de um \textbf{stall}, o registrador só atualiza seus valores se o sinal \texttt{stall} estiver 
+inativo (\texttt{if (!stall)}). 
+Se a Unidade de Detecção de Hazards ativar o \texttt{stall}, essa condição será falsa e, como não há 
+um bloco \texttt{else}, o registrador mantém seus valores atuais. 
+Esse congelamento preserva o conteúdo do estágio \texttt{EX/MEM} por um ciclo, permitindo que a instrução 
+anterior (causadora do hazard) avance, enquanto a instrução atual permanece no estágio \texttt{EX}, 
+resolvendo a dependência de dados.
+
+\subsubsection{Registrador MEM/WB}
+Este é o último registrador do pipeline, responsável por levar os dados para o estágio final de Escrita. Ele armazena o resultado final da operação -- que pode ser o valor vindo da ULA ou o dado lido da memória de dados -- e o endereço do registrador de destino onde este valor será escrito.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{codigo_mem_wb.png}
+    \caption{Codigo Fonte do Registrador  MEM/WB}
+    \label{fig:mem_wb}
+\end{figure}
+
+O código da imagem~\ref{fig:mem_wb} mostra um registrador síncrono que opera de forma 
+muito similar aos seus predecessores no pipeline, respondendo aos mesmos sinais de controle 
+para garantir a integridade do fluxo de instruções.
+
+Sua principal função é transportar para o estágio \texttt{WB} dois dados essenciais: 
+o resultado da ULA (\texttt{mem\_result}) e o dado lido da memória (\texttt{mem\_read\_data}). 
+A escolha de qual dos dois será utilizado não é feita neste estágio, mas sim no \texttt{WB}, 
+por meio de um multiplexador controlado pelo sinal \texttt{MemtoReg}, que também é propagado 
+por este registrador. Além disso, são transportados o endereço do registrador de destino 
+(\texttt{mem\_rd}) e o sinal de habilitação de escrita \texttt{mem\_RegWrite}.
+
+Na \textbf{operação normal}, quando o sinal \texttt{stall} está inativo (\texttt{!stall}), 
+o registrador captura, na borda de subida do clock, os valores de suas entradas 
+(prefixo \texttt{mem\_}) e os disponibiliza em suas saídas (prefixo \texttt{wb\_}). 
+Isso permite que a instrução avance do estágio de Acesso à Memória para o estágio de Escrita 
+de forma sincronizada.
+
+No caso de \textbf{reset ou flush} (\texttt{if (rst || flush)}), todas as saídas do registrador 
+são zeradas. A ação mais crítica é a desativação do sinal \texttt{wb\_RegWrite}, funcionando 
+como uma última barreira de segurança para impedir que uma instrução anulada por um desvio 
+possa, sob qualquer circunstância, realizar uma escrita indevida no banco de registradores 
+no estágio final.
+
+Quando ocorre um \textbf{stall}, o registrador \texttt{MEM/WB} mantém seus valores atuais, 
+congelando a instrução neste ponto do pipeline. Embora a maioria dos \textit{stalls} seja 
+resolvida em estágios anteriores, essa capacidade garante consistência no comportamento 
+do pipeline como um todo.
+
+Ao final de cada ciclo de clock, os valores estabilizados nas saídas deste registrador 
+(\texttt{wb\_result}, \texttt{wb\_read\_data}, \texttt{wb\_rd}, \texttt{wb\_RegWrite}, 
+\texttt{wb\_MemtoReg}) contêm todas as informações necessárias para que o estágio de 
+\texttt{Write Back} finalize a execução da instrução, seja atualizando um registrador ou 
+não realizando nenhuma ação.
+
+\section{Resultados}
+
+Durante o desenvolvimento da pipeline para o processador RISC-V32I, como exibido pela forma de onda  em \ref{fig:wave} e testbranch em \ref{fig:mem_dados}, \ref{fig:meme_instr} e \ref{fig:mem_reg}, identificamos diversos problemas que afetam o funcionamento correto do processador em determinadas situações.  
+
+\subsection{Funcionamento Parcial das Instruções}
+Instruções do tipo \texttt{ADDI} e \texttt{LW} funcionam corretamente na maioria dos casos, demonstrando que o caminho de dados básico está operacional. No entanto, mesmo com a presença da \textit{Forwarding Unit}, observamos que, em alguns cenários, ainda é necessário inserir instruções \texttt{NOP} manualmente para evitar \textit{hazards}. Isso indica que a unidade de \textit{forwarding} não está cobrindo todos os casos de dependências de dados, possivelmente devido a lacunas na detecção ou no roteamento dos dados entre estágios.
+
+\subsection{Problemas de Controle em Branches}
+O maior problema encontrado está relacionado às instruções de desvio (\texttt{BEQ}, \texttt{BNE}, etc.).  
+Atualmente, o \texttt{PC} não salta para o endereço correto quando ocorre um branch, e a pipeline não realiza o \textit{flush} dos estágios posteriores de forma adequada. Isso resulta em execução incorreta de instruções que deveriam ser descartadas, quebrando o fluxo esperado do programa.
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{wave_form.png}
+    \caption{WAVE}
+    \label{fig:wave}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{memoria_dados.png}
+    \caption{Memória de Dados}
+    \label{fig:mem_dados}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{memoria_instrucao.png}
+    \caption{Memória de Instruções}
+    \label{fig:meme_instr}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{memoria_registradores.png}
+    \caption{Registradores}
+    \label{fig:mem_reg}
+\end{figure}
+
+
+\section{Considerações Finais}
+
+Este trabalho apresentou o projeto e a implementação de um processador de 32 bits com base na especificação \texttt{RV32E} do \texttt{RISC-V}, utilizando uma arquitetura de \textit{pipeline} de cinco estágios. O objetivo principal foi criar um estudo de caso para o design de CPUs de baixo custo, implementando um subconjunto essencial de instruções para validar a funcionalidade básica do processador.
+
+O desenvolvimento modular em \texttt{Verilog HDL} permitiu a construção e a análise detalhada de todos os componentes fundamentais do caminho de dados, incluindo a ULA, o banco de registradores e o sistema de memória, além das unidades dedicadas ao tratamento de \textit{hazards}. A implementação alcançou sucesso parcial, com instruções como \texttt{ADDI} e \texttt{LW} funcionando corretamente na maioria dos cenários, o que valida a operação do caminho de dados principal.
+
+No entanto, a fase de testes revelou desafios significativos, que são centrais para o aprendizado em projetos de arquitetura de computadores. O principal obstáculo identificado reside na lógica de controle do \textit{pipeline}, especificamente no tratamento de desvios e na resolução de \textit{hazards} de dados. Foi observado que a Unidade de \textit{Forwarding}, embora presente, não cobre todos os cenários de dependência, exigindo a inserção manual de instruções \texttt{NOP} em alguns casos. Mais criticamente, as instruções de desvio condicional (\texttt{BEQ}, \texttt{BNE}, etc.) não funcionam como esperado: o cálculo do endereço de destino está incorreto e o mecanismo de \textit{flush}, essencial para descartar instruções subsequentes, não está sendo acionado adequadamente.
+
+Apesar dessas dificuldades, o projeto cumpriu seu propósito como uma ferramenta educacional, fornecendo uma visão aprofundada sobre as complexidades do design de um processador \textit{pipelined}. As falhas encontradas não diminuem o valor do trabalho, mas sim reforçam a importância de uma lógica de controle robusta e de testes exaustivos. 
+
+Os próximos passos, já delineados, focam na correção da unidade de controle de desvios, na implementação correta do \textit{flush} e na revisão da Unidade de \textit{Forwarding} para garantir a cobertura de todos os casos de dependência. Com essas melhorias, o processador tem o potencial de se tornar uma implementação completa e funcional do núcleo \texttt{RV32E}, servindo como uma base sólida para futuras otimizações e extensões.
+
+
+\label{sec:references}
+
+\begin{thebibliography}{99}
+   \bibitem{riscv-spec} Andrew Waterman, Yunsup Lee, David A. Patterson, Krste Asanović. \textit{The RISC-V Instruction Set Manual, Volume I: User-Level ISA, Version 2.1}. RISC-V Foundation, 2019. Disponível em: \url{https://drive.google.com/file/d/1uviu1nH-tScFfgrovvFCrj7Omv8tFtkp/view?pli=1}. Acesso em: 15 ago. 2025.
+   
+   \bibitem{riscv-site} RISC-V International. \textit{RISC-V Technical Specifications}. Disponível em: \url{https://lf-riscv.atlassian.net/wiki/spaces/HOME/pages/16154769/RISC-V+Technical+Specifications}. Acesso em: 15 ago. 2025.
+   
+   \bibitem{riscv-abi} RISC-V Foundation. \textit{RISC-V Calling Convention}. Disponível em: \url{https://riscv.org/wp-content/uploads/2015/01/riscv-calling.pdf}. Acesso em: 15 ago. 2025.
+\end{thebibliography}
+
+\bibliography{sbc-template}
+
+\end{document}

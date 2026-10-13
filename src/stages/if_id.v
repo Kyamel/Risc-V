@@ -4,17 +4,17 @@ module if_id (
     input wire         clk,
     input wire         rst,
 
-    // Controle
-    input wire         stall,
-    input wire         flush,
+    // Control
+    input wire         stall,      // Hold the current values
+    input wire         flush,      // Replace the instruction with a bubble
 
-    // Entradas do estágio IF
-    input wire [31:0]  pc_in,      // PC atual vindo do IF
-    input wire [31:0]  instr_in,   // Instrução da memória de instruções
+    // From IF
+    input wire [31:0]  pc_in,      // PC of the fetched instruction
+    input wire [31:0]  instr_in,   // Instruction from instruction memory
 
-    // Saídas para o estágio ID
-    output reg [31:0]  pc_out,        // PC passado para o ID/EX
-    output reg [31:0]  instr_out      // Instrução passada para os módulos de ID
+    // To ID
+    output reg [31:0]  pc_out,
+    output reg [31:0]  instr_out
 );
 
     always @(posedge clk or posedge rst) begin
@@ -28,7 +28,7 @@ module if_id (
             pc_out    <= pc_in;
             instr_out <= instr_in;
         end
-        // Quando stall está ativo, mantemos os valores anteriores
+        // On stall, keep the previous values
     end
 
 endmodule

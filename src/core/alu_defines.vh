@@ -2,7 +2,7 @@
 `ifndef ALU_DEFINES_VH
 `define ALU_DEFINES_VH
 
-// Códigos de operação da ALU
+// ALU operation codes
 `define ALU_ADD  4'b0000
 `define ALU_SUB  4'b0001
 `define ALU_SLL  4'b0010

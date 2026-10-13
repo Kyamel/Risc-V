@@ -1,14 +1,14 @@
 `timescale 1ns / 1ps
 
 module immediate_data_extractor (
-    input wire [31:0] instr,      // Instrução vinda do estágio IF/ID
-    output reg [31:0] imm_data     // Valor imediato extraído
+    input wire [31:0] instr,      // Instruction from IF/ID
+    output reg [31:0] imm_data     // Sign-extended immediate
 );
 
     always @(*) begin
-        case (instr[6:0])  // Baseado no opcode
+        case (instr[6:0])  // Format depends on the opcode
             // I-Type
-            7'b0000011, 7'b0010011:
+            7'b0000011, 7'b0010011, 7'b1100111:  // loads, ALU with immediate, JALR
                 imm_data = {{20{instr[31]}}, instr[31:20]};
 
             // S-Type

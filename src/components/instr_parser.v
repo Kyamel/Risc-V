@@ -29,19 +29,19 @@ module instr_parser (
     wire is_rtype = ~(is_itype | is_stype | is_btype | is_utype | is_jtype);
 
     // rs1 field extraction
-    assign rs1 = is_utype ? 5'b0 :          // U-type não usa rs1
-                 is_jtype ? 5'b0 :          // J-type não usa rs1
-                 instr[19:15];              // Todos os outros tipos
+    assign rs1 = is_utype ? 5'b0 :          // U-type has no rs1
+                 is_jtype ? 5'b0 :          // J-type has no rs1
+                 instr[19:15];              // All other types
 
     // rs2 field extraction
-    assign rs2 = is_itype ? 5'b0 :          // I-type não usa rs2
-                 is_utype ? 5'b0 :          // U-type não usa rs2
-                 is_jtype ? 5'b0 :          // J-type não usa rs2
+    assign rs2 = is_itype ? 5'b0 :          // I-type has no rs2
+                 is_utype ? 5'b0 :          // U-type has no rs2
+                 is_jtype ? 5'b0 :          // J-type has no rs2
                  instr[24:20];              // R-type, S-type, B-type
 
     // rd field extraction
-    assign rd = is_stype ? 5'b0 :           // S-type não tem rd
-                is_btype ? 5'b0 :           // B-type não tem rd
-                instr[11:7];                // Todos os outros tipos
+    assign rd = is_stype ? 5'b0 :           // S-type has no rd
+                is_btype ? 5'b0 :           // B-type has no rd
+                instr[11:7];                // All other types
 
 endmodule

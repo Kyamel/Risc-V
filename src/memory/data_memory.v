@@ -1,39 +1,38 @@
 `timescale 1ns / 1ps
 
 module data_memory #(
-    parameter WIDTH = 32,               // Largura de cada palavra (em bits)
-    parameter DEPTH = 1024,             // Número de posições de memória
-    parameter INIT_FILE = "none"        // Arquivo de inicialização (opcional)
+    parameter WIDTH = 32,               // Word width in bits
+    parameter DEPTH = 1024,             // Number of words
+    parameter INIT_FILE = "none"        // Optional initialization file (hex)
 ) (
-    input wire clk,                     // Sinal de clock
-    
-    input wire [WIDTH-1:0] mem_addr,    // Endereço de memória (vindo da ALU)
-    input wire [WIDTH-1:0] write_data,  // Dado para escrita
-    input wire mem_write,               // Sinal de escrita
-    input wire mem_read,                // Sinal de leitura
-    output reg [WIDTH-1:0] read_data    // Dado lido
+    input wire clk,
+
+    input wire [WIDTH-1:0] mem_addr,    // Byte address (from the ALU)
+    input wire [WIDTH-1:0] write_data,
+    input wire mem_write,
+    input wire mem_read,
+    output reg [WIDTH-1:0] read_data
 );
 
     localparam ADDR_WIDTH = $clog2(DEPTH);
     reg [WIDTH-1:0] memory [0:DEPTH-1];
-    
-    // Inicialização
+
+    // Initialization: all zeros, then the optional file
     integer i;
     initial begin
-        // Inicializa toda a memória com zeros
         for (i = 0; i < DEPTH; i = i + 1) begin
             memory[i] = 32'h0;
         end
-        
+
         if (INIT_FILE != "none") begin
             $readmemh(INIT_FILE, memory);
         end
     end
-    
-    // CORREÇÃO: Lógica separada para leitura e escrita
-    wire [ADDR_WIDTH-1:0] word_addr = mem_addr[$clog2(DEPTH)+1:2]; // Endereço de palavra
 
-    // Leitura combinacional (para compatibilidade com pipeline)
+    // Word index (word accesses only; the low 2 bits are ignored)
+    wire [ADDR_WIDTH-1:0] word_addr = mem_addr[$clog2(DEPTH)+1:2];
+
+    // Combinational read
     always @(*) begin
         if (mem_read) begin
             read_data = memory[word_addr];
@@ -41,8 +40,8 @@ module data_memory #(
             read_data = 32'h0;
         end
     end
-    
-    // Escrita síncrona
+
+    // Synchronous write
     always @(posedge clk) begin
         if (mem_write) begin
             memory[word_addr] <= write_data;

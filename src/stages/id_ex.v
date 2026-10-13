@@ -3,55 +3,58 @@
 module id_ex (
     input wire clk,
     input wire rst,
-    input wire stall,
-    input wire flush,
-    
-    // Entradas do estágio ID
-    input wire [31:0] id_read_data_1,    // Dado lido do registrador rs1
-    input wire [31:0] id_read_data_2,    // Dado lido do registrador rs2
-    input wire [31:0] id_imm_data,       // Valor imediato extendido
-    input wire [31:0] id_pc_out,         // PC atual (antes do +4)
-    input wire [4:0] id_rs1,             // Endereço do registrador rs1
-    input wire [4:0] id_rs2,             // Endereço do registrador rs2
-    input wire [4:0] id_rd,              // Endereço do registrador rd
-    input wire [2:0] id_funct3,          // Função 3 da instrução
-    input wire [6:0] id_funct7,          // Função 7 da instrução
+    input wire stall,                    // Hold the current values
+    input wire flush,                    // Insert a bubble (all control signals = 0)
 
-    // Sinais de controle da control_unit
-    input wire id_ALUSrc,                // Controle do mux da ULA
-    input wire [1:0] id_ALUOp,           // Controle da operação da ULA
-    input wire id_Branch,                // Sinal de branch
-    input wire id_Jump,                  // Sinal de jump (JAL/JALR)
-    input wire id_MemRead,               // Sinal de leitura de memória
-    input wire id_MemWrite,              // Sinal de escrita em memória
-    input wire id_RegWrite,              // Sinal de escrita no banco de registradores
-    input wire id_MemtoReg,              // Controle do mux WB (memória ou ULA para registrador)
+    // From ID
+    input wire [31:0] id_read_data_1,    // rs1 value read from the register file
+    input wire [31:0] id_read_data_2,    // rs2 value read from the register file
+    input wire [31:0] id_imm_data,       // Sign-extended immediate
+    input wire [31:0] id_pc_out,         // PC of the instruction
+    input wire [4:0] id_rs1,             // rs1 index (for forwarding)
+    input wire [4:0] id_rs2,             // rs2 index (for forwarding)
+    input wire [4:0] id_rd,              // rd index
+    input wire [2:0] id_funct3,
+    input wire [6:0] id_funct7,
 
-    // Saídas para o estágio EX
-    output reg [31:0] ex_read_data_1,    // Para entrada A da ULA
-    output reg [31:0] ex_read_data_2,    // Para mux da entrada B da ULA
-    output reg [31:0] ex_imm_data,       // Para mux da ULA e shift left
-    output reg [31:0] ex_pc_out,         // PC para cálculo de branch
-    output reg [4:0] ex_rs1,             // Endereço rs1 (para forwarding)
-    output reg [4:0] ex_rs2,             // Endereço rs2 (para forwarding)
-    output reg [4:0] ex_rd,              // Endereço rd (para WB)
-    output reg [2:0] ex_funct3,          // Função 3 da instrução
-    output reg [6:0] ex_funct7,          // Função 7 da instrução
+    // Control signals from the control unit
+    input wire id_ALUSrc,                // ALU operand B: 0 = rs2, 1 = immediate
+    input wire id_ALUSrcA,               // ALU operand A: 0 = rs1, 1 = PC (AUIPC)
+    input wire [1:0] id_ALUOp,           // ALU operation class
+    input wire id_Branch,                // Conditional branch
+    input wire id_Jump,                  // JAL/JALR
+    input wire id_JumpReg,               // Jump target is rs1 + imm (JALR)
+    input wire id_MemRead,               // Data memory read
+    input wire id_MemWrite,              // Data memory write
+    input wire id_RegWrite,              // Register file write
+    input wire id_MemtoReg,              // Write-back source: 0 = ALU, 1 = memory
 
-    // Sinais de controle para os estágios EX/MEM/WB
-    output reg ex_ALUSrc,                // Sinal de controle ALUSrc
-    output reg [1:0] ex_ALUOp,           // Sinal de controle ALUOp
-    output reg ex_Branch,                // Para estágio MEM (controle de branch)
-    output reg ex_Jump,                  // Para estágio MEM (controle de jump)
-    output reg ex_MemRead,               // Para estágio MEM (leitura de memória)
-    output reg ex_MemWrite,              // Para estágio MEM (escrita em memória)
-    output reg ex_RegWrite,              // Para estágio WB (escrita em registrador)
-    output reg ex_MemtoReg               // Para estágio WB (seleção de dado para registrador)
+    // To EX
+    output reg [31:0] ex_read_data_1,
+    output reg [31:0] ex_read_data_2,
+    output reg [31:0] ex_imm_data,
+    output reg [31:0] ex_pc_out,
+    output reg [4:0] ex_rs1,
+    output reg [4:0] ex_rs2,
+    output reg [4:0] ex_rd,
+    output reg [2:0] ex_funct3,
+    output reg [6:0] ex_funct7,
+
+    // Control signals for EX/MEM/WB
+    output reg ex_ALUSrc,
+    output reg ex_ALUSrcA,
+    output reg [1:0] ex_ALUOp,
+    output reg ex_Branch,
+    output reg ex_Jump,
+    output reg ex_JumpReg,
+    output reg ex_MemRead,
+    output reg ex_MemWrite,
+    output reg ex_RegWrite,
+    output reg ex_MemtoReg
 );
 
     always @(posedge clk or posedge rst) begin
         if (rst || flush) begin
-            // Reset/flush: zera todos os registradores
             ex_read_data_1 <= 32'b0;
             ex_read_data_2 <= 32'b0;
             ex_imm_data <= 32'b0;
@@ -62,18 +65,18 @@ module id_ex (
             ex_funct3 <= 3'b0;
             ex_funct7 <= 7'b0;
 
-            // Zera todos os sinais de controle
             ex_ALUSrc <= 1'b0;
+            ex_ALUSrcA <= 1'b0;
             ex_ALUOp <= 2'b0;
             ex_Branch <= 1'b0;
             ex_Jump <= 1'b0;
+            ex_JumpReg <= 1'b0;
             ex_MemRead <= 1'b0;
             ex_MemWrite <= 1'b0;
             ex_RegWrite <= 1'b0;
             ex_MemtoReg <= 1'b0;
         end
         else if (!stall) begin
-            // Registra os valores normalmente
             ex_read_data_1 <= id_read_data_1;
             ex_read_data_2 <= id_read_data_2;
             ex_imm_data <= id_imm_data;
@@ -84,17 +87,18 @@ module id_ex (
             ex_funct3 <= id_funct3;
             ex_funct7 <= id_funct7;
 
-            // Passa os sinais de controle
             ex_ALUSrc <= id_ALUSrc;
+            ex_ALUSrcA <= id_ALUSrcA;
             ex_ALUOp <= id_ALUOp;
             ex_Branch <= id_Branch;
             ex_Jump <= id_Jump;
+            ex_JumpReg <= id_JumpReg;
             ex_MemRead <= id_MemRead;
             ex_MemWrite <= id_MemWrite;
             ex_RegWrite <= id_RegWrite;
             ex_MemtoReg <= id_MemtoReg;
         end
-        // Se stall, mantém os valores atuais (não precisa de else explícito)
+        // On stall, keep the current values
     end
 
 endmodule

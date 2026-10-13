@@ -1,4 +1,4 @@
-// constants.v - Definições de constantes para o processador RISC-V
+// constants.vh - RISC-V processor constants
 `ifndef CONSTANTS_V
 `define CONSTANTS_V
 
@@ -21,7 +21,7 @@
 `define CTRL_MEM_WRITE  4
 `define CTRL_BRANCH     5
 `define CTRL_JUMP       6
-`define CTRL_ALU_OP_0   7  // ALUOp é 2 bits, então usa posições 7 e 8
+`define CTRL_ALU_OP_0   7  // ALUOp is 2 bits wide: positions 7 and 8
 `define CTRL_ALU_OP_1   8
 
 // Opcodes RISC-V
